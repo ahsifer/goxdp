@@ -1,0 +1,233 @@
+package main
+
+import (
+	// "C"
+	"flag"
+	"fmt"
+	"log"
+	"math/bits"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	// "os"
+	"errors"
+	"github.com/dropbox/goebpf"
+)
+
+func main() {
+	action := flag.String("action", "", "Action to take. Available values are load,unload,drop,allow")
+	ip := flag.String("ip", "", "IP address")
+	_ = ip
+	subnet := flag.String("subnet", "", "Network Subnet")
+	_ = subnet
+	mode := flag.String("mode", "", "The mode that XDP program will work. Available values are skb, native, and hw")
+	timeout := flag.String("timeout", "", "How long the IP address or the subnet will be blocked")
+	_ = timeout
+	interfaceName := flag.String("interface", "", "Interface name that XDP code will be attached to")
+	flag.Parse()
+
+	//Handle Load functionality
+	
+
+	if *action == "unload" {
+		if *interfaceName != "" {
+			xdpUnload(*interfaceName)
+			os.Exit(0)
+		} else {
+			log.Fatal("Please provide interface name to unload XDP program from")
+		}
+	}
+
+	if *action == "block" {
+		xdpBlockIP()
+	}
+
+	// ipList := []string{
+	// 	// "127.0.0.1",
+	// 	"10.10.10.1",
+	// }
+
+	// // Load XDP Into App
+	// bpf := goebpf.NewDefaultEbpfSystem()
+	// // bpf.
+	// err := bpf.LoadElf("./xdp.o")
+	// if err != nil {
+	// 	log.Fatalf("LoadELF() failed: %s", err)
+	// }
+	// ipAddresses := bpf.GetMapByName("IP_ADDRESSES")
+	// if ipAddresses == nil {
+	// 	log.Fatalf("eBPF map 'IP_ADDRESSES' not found\n")
+	// }
+
+	// xdp := bpf.GetProgramByName("firewall")
+	// if xdp == nil {
+	// 	log.Fatalln("Program 'firewall' not found in Program")
+	// }
+	// err = xdp.Load()
+	// if err != nil {
+	// 	fmt.Printf("xdp.Attach(): %v", err)
+	// }
+
+	// err = xdp.Attach(&goebpf.XdpAttachParams{
+	// 	Interface: *interfaceName,
+	// 	Mode:      goebpf.XdpAttachModeSkb,
+	// })
+	// if err != nil {
+	// 	log.Fatalf("Error attaching to Interface: %s", err)
+	// }
+
+	// err = BlockIPAddress(ipList, ipAddresses)
+	// fmt.Println(err)
+	// // test := bpf.GetMapByName("IP_ADDRESSES")
+	// // value, _ := test.LookupInt(2130706433)
+	// // log.Print(value)
+	// // test2 := bpf.GetMapByName("STATUS")
+	// // time.Sleep(10 * time.Second)
+	// // value2, _ := test2.LookupInt(0)
+	// // log.Print(value2)
+
+	// defer xdp.Detach()
+	// ctrlC := make(chan os.Signal, 1)
+	// signal.Notify(ctrlC, os.Interrupt)
+	// log.Println("XDP Program Loaded successfully into the Kernel.")
+	// log.Println("Press CTRL+C to stop.")
+	// <-ctrlC
+}
+
+// Load the XDP program
+func xdpLoad(mode string, interfaceName string) error {
+	bpf := goebpf.NewDefaultEbpfSystem()
+	// bpf.
+	err := bpf.LoadElf("./cFiles/xdp.o")
+	if err != nil {
+		log.Fatalf("Unable to load xdp.o file: %s", err)
+	}
+
+	xdp := bpf.GetProgramByName("firewall")
+	if xdp == nil {
+		log.Fatalln("Program 'firewall' not found in Program")
+	}
+	err = xdp.Load()
+	if err != nil {
+		fmt.Printf("xdp.Attach(): %v", err)
+	}
+
+	//Create Modes Array
+	modes := make(map[string]goebpf.XdpAttachMode)
+	modes["hw"] = goebpf.XdpAttachModeHw
+	modes["skb"] = goebpf.XdpAttachModeSkb
+	modes["nv"] = goebpf.XdpAttachModeDrv
+	finalMode, ok := modes[mode]
+	if !ok {
+		return errors.New("Error: Bad Mode")
+
+	}
+	interfaceParam := goebpf.XdpAttachParams{
+		Interface: interfaceName,
+		Mode:      finalMode,
+	}
+
+	err = xdp.Attach(&interfaceParam)
+	if err != nil {
+		log.Fatalf("Error attaching to Interface: %s", err)
+	}
+	return nil
+}
+
+// Unload the XDP program
+func xdpUnload(interfaceName string) {
+	// command := fmt.Sprintf("ip link set dev %v xdp off", interfaceName)
+	_, err := exec.Command("ip", "link", "set", "dev", interfaceName, "xdp", "off").Output()
+	if err != nil {
+		log.Fatal("unable to unload XDP program from the interface Error:", err)
+	}
+
+}
+
+func xdpBlockIP() {
+	ipList := []string{
+		// "127.0.0.1",
+		"10.10.10.1",
+	}
+
+	// Load XDP Into App
+	bpf := goebpf.NewDefaultEbpfSystem()
+	// bpf.
+	err := bpf.LoadElf("./cFiles/xdp.o")
+	if err != nil {
+		log.Fatalf("LoadELF() failed: %s", err)
+	}
+	ipAddresses := bpf.GetMapByName("IP_ADDRESSES")
+	if ipAddresses == nil {
+		log.Fatalf("eBPF map 'IP_ADDRESSES' not found\n")
+	}
+
+	xdp := bpf.GetProgramByName("firewall")
+	if xdp == nil {
+		log.Fatalln("Program 'firewall' not found in Program")
+	}
+	err = xdp.Load()
+	if err != nil {
+		fmt.Printf("xdp.Attach(): %v", err)
+	}
+
+	err = xdp.Attach(&goebpf.XdpAttachParams{
+		Interface: "lo",
+		Mode:      goebpf.XdpAttachModeSkb,
+	})
+	if err != nil {
+		log.Fatalf("Error attaching to Interface: %s", err)
+	}
+	fmt.Println(ipAddresses)
+	err = BlockIPAddress(ipList, ipAddresses)
+	fmt.Println(ipAddresses)
+	fmt.Println(err)
+	// test := bpf.GetMapByName("IP_ADDRESSES")
+	// value, _ := test.LookupInt(2130706433)
+	// log.Print(value)
+	// test2 := bpf.GetMapByName("STATUS")
+	// time.Sleep(10 * time.Second)
+	// value2, _ := test2.LookupInt(0)
+	// log.Print(value2)
+
+}
+
+func BlockIPAddress(ipList []string, ipAddresses goebpf.Map) error {
+	for _, ip := range ipList {
+		newINt := bits.ReverseBytes32(IP4toInt(ip))
+		err := ipAddresses.Insert(int32(newINt), uint64(1)) // Insert a dummy value
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// func Reverse(s string) (result string) {
+// 	for _, v := range s {
+// 		result = string(v) + result
+// 	}
+// 	return
+// }
+
+func IP4toInt(IPv4Addr string) uint32 {
+	bits := strings.Split(IPv4Addr, ".")
+
+	b0, _ := strconv.Atoi(bits[0])
+	b1, _ := strconv.Atoi(bits[1])
+	b2, _ := strconv.Atoi(bits[2])
+	b3, _ := strconv.Atoi(bits[3])
+
+	var sum uint32
+
+	// left shifting 24,16,8,0 and bitwise OR
+
+	sum += uint32(b0) << 24
+	sum += uint32(b1) << 16
+	sum += uint32(b2) << 8
+	sum += uint32(b3)
+
+	return sum
+}
