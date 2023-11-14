@@ -1,7 +1,5 @@
 #include <linux/if_ether.h>
 #include <linux/ip.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include "bpf_helpers.h"
 struct datarec {
 	__u64 rx_packets;
@@ -32,8 +30,8 @@ int firewall(struct xdp_md *ctx){
   if (data + sizeof(*ether) > data_end) {
     return XDP_ABORTED;
   }
-  //Earthernet header is not malformed
-  if (ether->h_proto != 0x08U) { 
+  //Ethernet header is not malformed
+  if (ether->h_proto != ETH_P_IP) { 
     // If not IPv4 Traffic, pass the packet
     return XDP_PASS;
   }
