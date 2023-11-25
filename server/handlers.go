@@ -3,26 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ahsifer/goxdp/helpers"
-	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/link"
 	"net"
 	"net/http"
 	"net/netip"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ahsifer/goxdp/helpers"
+	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/link"
 )
 
 // Load XDP program into the provided interfaces
 func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Request) {
 	// app.InfoLog.Print(app.LoadedInterfaces)
 	response.Header().Set("Content-Type", "application/json")
-	if app.Is_loaded == true {
-		app.ErrorLog.Printf("XDP program is already loaded")
-		helpers.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
 	//Request body parsing
 	var body load
 	err := json.NewDecoder(request.Body).Decode(&body)
@@ -34,7 +30,8 @@ func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Requ
 
 	//check for empty inputs
 	if body.Interfaces == nil || body.Mode == nil {
-		app.ErrorLog.Printf("Request body does not include mode or Interfaces names to load")
+		errMessage := "Request body does not include mode or Interfaces names to load"
+		app.ErrorLog.Printf(errMessage)
 		helpers.Error(response, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
@@ -49,7 +46,7 @@ func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Requ
 	modes["nv"] = link.XDPDriverMode
 	loadMode, ok := modes[*body.Mode]
 	if !ok {
-		app.ErrorLog.Printf("Request body does not include mode or IP address")
+		app.ErrorLog.Printf("Invalid Mode")
 		helpers.Error(response, "Invalid Mode", http.StatusBadRequest)
 		return
 	}
@@ -60,23 +57,30 @@ func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Requ
 		Flags:   loadMode,
 	}
 	for _, value := range *app.Interfaces {
+		//check if XDP code is already loaded
+		_, ok := app.LoadedInterfaces[value]
+		if ok {
+			errMsg := "XDP is already loaded to the interface: " + value
+			app.InfoLog.Print(errMsg)
+			continue
+		}
 		iface, err := net.InterfaceByName(value)
 		if err != nil {
-			app.ErrorLog.Printf("lookup network iface %q: %s", value, err)
-			helpers.Error(response, "Invalid Request Body", http.StatusBadRequest)
+			errMessage := "interface does not exists " + value + " -> " + err.Error()
+			app.ErrorLog.Printf(errMessage)
+			helpers.Error(response, errMessage, http.StatusBadRequest)
+			return
 		}
 		interLink.Interface = iface.Index
 		l, err := link.AttachXDP(interLink)
 		if err != nil {
-			errorMSG := fmt.Sprintf("Cannot attach XDP to %s: %s", value, err)
+			errorMSG := "Cannot attach XDP to " + value + " XDP might be already loaded to the interface  -> " + err.Error()
 			app.ErrorLog.Printf(errorMSG)
 			helpers.Error(response, errorMSG, http.StatusBadRequest)
 			return
 		}
 		app.LoadedInterfaces[value] = l
 	}
-	app.Is_loaded = true
-	// app.InfoLog.Print(app.LoadedInterfaces)
 	response.WriteHeader(200)
 	return
 }
@@ -84,9 +88,9 @@ func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Requ
 // unload XDP programs
 func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
-	if app.Is_loaded == false {
+	if len(app.LoadedInterfaces) == 0 {
 		app.ErrorLog.Printf("XDP program is not loaded")
-		helpers.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		helpers.Error(response, "XDP program is not loaded to any of the interfaces", http.StatusBadRequest)
 		return
 	}
 	//Request body parsing
@@ -104,6 +108,7 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 		helpers.Error(response, "Request body does not include Interfaces names to unload", http.StatusBadRequest)
 		return
 	}
+
 	//parse input interfaces
 	stringSlice := strings.Split(*body.Interfaces, ",")
 	// app.InfoLog.Print(app.LoadedInterfaces)
@@ -126,26 +131,24 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 		for _, value := range stringSlice {
 			val, ok := app.LoadedInterfaces[value]
 			if !ok {
+				response.Write([]byte("no XDP code loaded to the interface: " + value))
 				continue
 			}
 			err = val.Close()
 			if err != nil {
 				app.ErrorLog.Printf("Cannot remove XDP from the interface -> %v\n", err)
-				helpers.Error(response, "Cannot remove XDP from the interface", http.StatusBadRequest)
+				helpers.Error(response, "Cannot remove XDP from the interface: "+value, http.StatusBadRequest)
 				return
 			}
 			delete(app.LoadedInterfaces, value)
 		}
-	}
-	if len(app.LoadedInterfaces) == 0 {
-		app.Is_loaded = false
 	}
 	app.InfoLog.Print(app.LoadedInterfaces)
 	response.WriteHeader(200)
 	return
 }
 
-// unload XDP programs
+// status XDP programs
 func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	//Request body parsing
@@ -173,8 +176,9 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 	stringSlice := strings.Split(*validIP, "/")
 	prefix, err := strconv.ParseUint(stringSlice[1], 10, 32)
 	if err != nil {
-		app.ErrorLog.Printf("Input prefix cannot be parsed to unit32 -> %s", err)
-		helpers.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		errMsg := "Input prefix cannot be parsed to unit32 -> " + err.Error()
+		app.ErrorLog.Print(errMsg)
+		helpers.Error(response, errMsg, http.StatusBadRequest)
 		return
 	}
 	//Convert the IP address to decimal with big endian format
@@ -226,10 +230,9 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 
 func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Request) {
 	var output statusMapOutput
-	var statusMapOutput []statusMapJson
-	var blockedMapOutput []string
 
 	//prepare status for the blocked IP addresses
+	statusMapOutput := []statusMapJson{}
 	iter := app.BpfObjects.Status.Iterate()
 	var key netip.Addr
 	val := make([]bpfStatusMapVal, app.BpfObjects.Status.MaxEntries())
@@ -246,9 +249,12 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 			Size_packets: size_packets,
 		})
 	}
-	app.InfoLog.Print(iter.Err())
+	if err := iter.Err(); err != nil {
+		app.InfoLog.Print(err)
+	}
 
 	//prepare the blocked IP addresses from the LPM map
+	blockedMapOutput := []string{}
 	var blockedMapKey uint64
 	var blockedMapVal uint8
 	iter = app.BpfObjects.BlockedIpv4.Iterate()
@@ -258,10 +264,16 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 		blockedMapOutput = append(blockedMapOutput, fmt.Sprintf("%s/%d", helpers.IntToIPv4(ip), prefix))
 
 	}
-	app.ErrorLog.Print(iter.Err())
+	if err := iter.Err(); err != nil {
+		app.InfoLog.Print(err)
+	}
 
-	output.Blocked = blockedMapOutput
-	output.Status = statusMapOutput
+	//Prepare the name of the interfaces that the XDP program is loaded to
+	loadedInterfaces := []string{}
+	for key := range app.LoadedInterfaces {
+		loadedInterfaces = append(loadedInterfaces, key)
+	}
+
 	// output.Timeout = app.TimeoutList
 	timeoutOutput := []statusTimeoutOutput{}
 	for srcKey, timeValue := range app.TimeoutList {
@@ -271,6 +283,11 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 			Remaining: int(timeValue.Sub(time.Now()).Seconds()),
 		})
 	}
+
+	//prepare our output
+	output.Blocked = blockedMapOutput
+	output.Status = statusMapOutput
+	output.Interfaces = loadedInterfaces
 	output.Timeout = timeoutOutput
 
 	finalResponse, err := json.Marshal(output)

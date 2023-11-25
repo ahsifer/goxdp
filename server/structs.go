@@ -20,7 +20,7 @@ type Application struct {
 	Interfaces       *[]string
 	LoadedInterfaces map[string]link.Link
 	TimeoutList      map[BpfIpv4LpmKey]time.Time
-	Is_loaded        bool
+	// Is_loaded        bool
 }
 
 // type blockedTimeout struct {
@@ -49,7 +49,8 @@ type statusTimeoutOutput struct {
 	Remaining int    `json:"remaining_time"`
 }
 type statusMapOutput struct {
-	Blocked []string              `json:"blocked"`
-	Timeout []statusTimeoutOutput `json:"timeout"`
-	Status  []statusMapJson       `json:"stats"`
+	Interfaces []string              `json:"interfaces"`
+	Blocked    []string              `json:"blocked"`
+	Timeout    []statusTimeoutOutput `json:"timeout"`
+	Status     []statusMapJson       `json:"stats"`
 }

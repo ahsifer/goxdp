@@ -16,8 +16,6 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf ../source/xdp.c -- -I../headers
 
-// the blockedTimeout map used to store the blocked subnets that includes timeout
-
 func main() {
 	defMessage := "Error: Bad input parameters:> \nUsage:\n \tgoxdp <command> <options> \navailable commands are:\n\tserver \tstart XDP HTTP server for handling users requests\n\tclient\tinteract with the XDP server\nFlags:\n\t-h,--h\tfor help"
 	if len(os.Args) <= 1 {
@@ -55,7 +53,7 @@ func main() {
 			ErrorLog:         log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
 			LoadedInterfaces: map[string]link.Link{},
 			TimeoutList:      map[BpfIpv4LpmKey]time.Time{},
-			Is_loaded:        false,
+			// Is_loaded:        false,
 		}
 		//check if user entered correct timeout interval for the timeout worker
 		if *timeoutWorkerInterval < 5 {
@@ -81,6 +79,9 @@ func main() {
 			app.ErrorLog.Fatal(err)
 		}
 	} else if os.Args[1] == "client" {
+		//remove timestamps from the returned logs
+		// newLogger := log.New(os.Stdout, "INFO\t",)
+		log.SetFlags(0)
 		//Begin Client Section
 		clientFlags.Parse(os.Args[2:])
 		//Create new clientApp struct
@@ -97,10 +98,21 @@ func main() {
 				log.Print("Interfaces or mode flags cannot be empty")
 				clientFlags.PrintDefaults()
 			}
-			err := clientApp.LoadXDP(*interfacesClient, *modeClient)
+			msg, err := clientApp.LoadXDP(*interfacesClient, *modeClient)
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.Print(msg)
+		} else if *actionClient == "unload" {
+			if *interfacesClient == "" && *modeClient == "" {
+				log.Print("Interfaces names cannot be empty")
+				clientFlags.PrintDefaults()
+			}
+			msg, err := clientApp.UnloadXDP(*interfacesClient)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print(msg)
 		}
 
 	} else {
