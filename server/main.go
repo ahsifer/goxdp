@@ -3,102 +3,107 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/dropbox/goebpf"
-	"github.com/go-chi/chi/v5"
+	"time"
+
+	"github.com/ahsifer/goxdp/client"
+	"github.com/cilium/ebpf/link"
+
 	"log"
 	"net/http"
 	"os"
+	// "strings"
 )
 
-type Application struct {
-	MainProgram goebpf.Program
-	// InterfaceProgrammes map[string]goebpf.Program
-	IpAddressMap goebpf.Map
-	StatusMap    goebpf.Map
-}
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf ../source/xdp.c -- -I../headers
 
-var AppInstance Application
+// the blockedTimeout map used to store the blocked subnets that includes timeout
 
 func main() {
+	defMessage := "Error: Bad input parameters:> \nUsage:\n \tgoxdp <command> <options> \navailable commands are:\n\tserver \tstart XDP HTTP server for handling users requests\n\tclient\tinteract with the XDP server\nFlags:\n\t-h,--h\tfor help"
 	if len(os.Args) <= 1 {
-		log.Fatal("Error: Bad input parameters:> \nUsage gxfilter <command> <options> \navailable commands are server, client\nconsider gxfilter <command> -h for more information")
+		log.Fatal(defMessage)
 	}
 
 	//Handling server flags
 	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
 	listenIP := serverFlags.String("ip", "127.0.0.1", "IP address will listen to")
 	listenPort := serverFlags.String("port", "8090", "Port number will listen to")
+	timeoutWorkerInterval := serverFlags.Int("timeoutinterval", 30, "The timeout of the worker thread to check if subnet or IP address timeout is finished")
 	// Handling Client Flags
 	clientFlags := flag.NewFlagSet("client", flag.ExitOnError)
-	action := clientFlags.String("action", "", "Action to take. Available values are load,unload,drop,allow")
-	_ = action
-	ip := clientFlags.String("ip", "", "IP address")
-	_ = ip
-	subnet := clientFlags.String("subnet", "", "Network Subnet")
-	_ = subnet
-	mode := clientFlags.String("mode", "", "The mode that XDP program will work. Available values are skb, native, and hw")
-	_ = mode
-	timeout := clientFlags.String("timeout", "", "How long the IP address or the subnet will be blocked")
-	_ = timeout
-	interfaceName := clientFlags.String("interface", "", "Interface name that XDP code will be attached to")
-	_ = interfaceName
+	actionClient := clientFlags.String("action", "", "Available values are load,unload,block, allow, status")
+	interfacesClient := clientFlags.String("interfaces", "", "Interfaces names that the XDP programme will be loaded to (Example 'eth0,eth1')")
+	modeClient := clientFlags.String("mode", "", "The mode that XDP programme will be loaded (available values are nv,skb, and hw)")
 
-	// Start server section
+	srcClient := clientFlags.String("src", "", "src IP address or subnet that will be blocked or allowed")
+	_ = srcClient
+
+	timeoutClient := clientFlags.String("timeout", "", "How long the IP address or the subnet will be blocked in seconds")
+	_ = timeoutClient
+
+	serverIPClient := clientFlags.String("ip", "127.0.0.1", "How long the IP address or the subnet will be blocked in seconds")
+	_ = serverIPClient
+
+	serverPortClient := clientFlags.String("port", "8090", "How long the IP address or the subnet will be blocked in seconds")
+	_ = serverPortClient
+
 	if os.Args[1] == "server" {
-		// ip := flag.String("ip", "127.0.0.1", "IP address will listen to (default 127.0.0.1)")
-		// port := flag.String("port", "8090", "Port number will listen to (default 8090)")
-		//Parse input flags
 		serverFlags.Parse(os.Args[2:])
+		//Instance of the application struct
+		app := Application{
+			InfoLog:          log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
+			ErrorLog:         log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
+			LoadedInterfaces: map[string]link.Link{},
+			TimeoutList:      map[BpfIpv4LpmKey]time.Time{},
+			Is_loaded:        false,
+		}
+		//check if user entered correct timeout interval for the timeout worker
+		if *timeoutWorkerInterval < 5 {
+			app.ErrorLog.Fatal("TimeoutWorkerInterval should 5 or greater")
+		}
+		//start timeout worker
+		go app.timeoutWorker(*timeoutWorkerInterval)
+		//create object of the xdp firewall
+		objs := bpfObjects{}
+		if err := loadBpfObjects(&objs, nil); err != nil {
+			app.ErrorLog.Fatalf("cannot load objects: %s", err)
+		}
+		app.BpfObjects = &objs
 
-		bpf := goebpf.NewDefaultEbpfSystem()
-		// bpf.
-		err := bpf.LoadElf("/etc/gxfilter/xdp.o")
+		srv := &http.Server{
+			Addr:     fmt.Sprintf("%s:%s", *listenIP, *listenPort),
+			ErrorLog: app.ErrorLog,
+			Handler:  app.newRouter(),
+		}
+		app.InfoLog.Printf("Starting server on IP: %s, Port: %s", *listenIP, *listenPort)
+		err := srv.ListenAndServe()
 		if err != nil {
-			log.Fatalf("Error: /etc/gxfilter/xdp.o file not found")
+			app.ErrorLog.Fatal(err)
 		}
-		ipAddresses := bpf.GetMapByName("IP_ADDRESSES")
-		if ipAddresses == nil {
-			log.Fatalf("Error: eBPF map 'IP_ADDRESSES' not found\n")
-		}
-
-		statusMap := bpf.GetMapByName("STATUS")
-		if ipAddresses == nil {
-			log.Fatalf("Error: eBPF map 'STATUS' not found\n")
-		}
-
-		xdp := bpf.GetProgramByName("firewall")
-		if xdp == nil {
-			log.Fatalln("Error: Program 'firewall' not found in Program")
-		}
-		err = xdp.Load()
-		if err != nil {
-			log.Fatalln("Error: Unable to load the XDP program into the kernel -> detailed error: ", err)
-		}
-		AppInstance.MainProgram = xdp
-		AppInstance.IpAddressMap = ipAddresses
-		AppInstance.StatusMap = statusMap
-		// AppInstance.InterfaceProgrammes = make(map[string]goebpf.Program)
-
-		// Create new map
-
-		r := chi.NewRouter()
-
-		r.Post("/load", xdpLoad)
-		r.Post("/unload/{interface}", xdpUnload)
-		log.Print(*listenIP, " ", *listenPort)
-		err = http.ListenAndServe(fmt.Sprintf("%s:%s", *listenIP, *listenPort), r)
-		if err != nil {
-			log.Fatal("Error:Unable to start the server -> error details: ", err)
-		}
-		log.Print(fmt.Sprintf("INFO: Filter is started and listening on %s:%s ", *listenIP, *listenPort))
-		//Start client section
-
 	} else if os.Args[1] == "client" {
+		//Begin Client Section
 		clientFlags.Parse(os.Args[2:])
-		// log.Println(os.Args)
-		// flag.PrintDefaults()
-	} else {
-		log.Panic("Error Bad input parameters:> Usage gxfilter <command> \navailable commands are server, client\n consider gxfilter <command> -h for more information")
-	}
+		//Create new clientApp struct
+		clientApp := client.ClientAPP{
+			ServerIP:   *serverIPClient,
+			ServerPort: *serverPortClient,
+		}
 
+		if *actionClient == "" {
+			log.Print("Action flag cannot be empty")
+			clientFlags.PrintDefaults()
+		} else if *actionClient == "load" {
+			if *interfacesClient == "" && *modeClient == "" {
+				log.Print("Interfaces or mode flags cannot be empty")
+				clientFlags.PrintDefaults()
+			}
+			err := clientApp.LoadXDP(*interfacesClient, *modeClient)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+	} else {
+		log.Fatal(defMessage)
+	}
 }
