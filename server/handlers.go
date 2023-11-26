@@ -197,7 +197,7 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 		err = app.BpfObjects.BlockedIpv4.Update(&key, uint8(1), ebpf.UpdateAny)
 		if err != nil {
 			app.InfoLog.Print(err)
-			helpers.Error(response, "Unable to Update or update blocked_ipv4 LPM map", http.StatusInternalServerError)
+			helpers.Error(response, "Unable to update blocked_ipv4 LPM map", http.StatusInternalServerError)
 			return
 		}
 
@@ -213,13 +213,13 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 	} else if *body.Action == "allow" {
 		err = app.BpfObjects.BlockedIpv4.Delete(&key)
 		if err != nil {
-			app.InfoLog.Print(err)
-			helpers.Error(response, "Unable to Update or update blocked_ipv4 LPM map", http.StatusInternalServerError)
+			app.InfoLog.Print(err.Error())
+			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
 			return
 		}
-		app.InfoLog.Print(app.TimeoutList)
+		// app.InfoLog.Print(app.TimeoutList)
 		delete(app.TimeoutList, key)
-		app.InfoLog.Print(app.TimeoutList)
+		// app.InfoLog.Print(app.TimeoutList)
 
 	} else {
 		helpers.Error(response, "Bad input action", http.StatusBadRequest)

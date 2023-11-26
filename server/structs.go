@@ -23,18 +23,13 @@ type Application struct {
 	// Is_loaded        bool
 }
 
-// type blockedTimeout struct {
-// 	Src     bpfIpv4LpmKey
-// 	Timeout time.Time
-// }
-
 // Structs used by xdpLoad and xdpUnload handlers
 type load struct {
 	Mode       *string `json:"mode"`
 	Interfaces *string `json:"interfaces"`
 	Src        *string `json:"src"`
 	Action     *string `json:"action"`
-	Timeout    *uint   `json:"timeout,string"`
+	Timeout    *uint   `json:"timeout"`
 }
 
 // Structs for XDP status

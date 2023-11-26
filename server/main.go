@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ahsifer/goxdp/client"
+	"github.com/ahsifer/goxdp/helpers"
 	"github.com/cilium/ebpf/link"
 
 	"log"
@@ -32,18 +33,10 @@ func main() {
 	actionClient := clientFlags.String("action", "", "Available values are load,unload,block, allow, status")
 	interfacesClient := clientFlags.String("interfaces", "", "Interfaces names that the XDP programme will be loaded to (Example 'eth0,eth1')")
 	modeClient := clientFlags.String("mode", "", "The mode that XDP programme will be loaded (available values are nv,skb, and hw)")
-
 	srcClient := clientFlags.String("src", "", "src IP address or subnet that will be blocked or allowed")
-	_ = srcClient
-
-	timeoutClient := clientFlags.String("timeout", "", "How long the IP address or the subnet will be blocked in seconds")
-	_ = timeoutClient
-
+	timeoutClient := clientFlags.Uint("timeout", 0, "How long the IP address or the subnet will be blocked in seconds")
 	serverIPClient := clientFlags.String("ip", "127.0.0.1", "How long the IP address or the subnet will be blocked in seconds")
-	_ = serverIPClient
-
 	serverPortClient := clientFlags.String("port", "8090", "How long the IP address or the subnet will be blocked in seconds")
-	_ = serverPortClient
 
 	if os.Args[1] == "server" {
 		serverFlags.Parse(os.Args[2:])
@@ -109,6 +102,25 @@ func main() {
 				clientFlags.PrintDefaults()
 			}
 			msg, err := clientApp.UnloadXDP(*interfacesClient)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print(msg)
+		} else if *actionClient == "allow" || *actionClient == "block" {
+			//check if IP address or subnet is valid
+			if _, err := helpers.IpChecker(*srcClient); err != nil {
+				log.Fatal(err)
+			}
+			if *timeoutClient < 0 {
+				log.Fatal("timeout cannot be less than zero")
+			}
+			msg, err := clientApp.BlockXDP(*actionClient, *srcClient, *timeoutClient)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print(msg)
+		} else if *actionClient == "status" {
+			msg, err := clientApp.StatusXDP()
 			if err != nil {
 				log.Fatal(err)
 			}
