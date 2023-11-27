@@ -10,7 +10,7 @@ import (
 	// "net/http"
 )
 
-func (app *Application) newRouter() *chi.Mux {
+func (app *Application) privateRouter() *chi.Mux {
 	// Create non-global registry.
 	reg := prometheus.NewRegistry()
 
@@ -23,13 +23,27 @@ func (app *Application) newRouter() *chi.Mux {
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(middleware.Logger)
 	chiRouter.Use(middleware.Recoverer)
-	chiRouter.Use(middleware.AllowContentType("application/json"))
 	chiRouter.Use(middleware.CleanPath)
 	chiRouter.Use(middleware.RealIP)
 	chiRouter.Use(middleware.RedirectSlashes)
 	chiRouter.Post("/load", app.xdpLoad)
 	chiRouter.Post("/unload", app.xdpUnload)
 	chiRouter.Post("/block", app.xdpBlock)
+	chiRouter.Get("/status", app.xdpStatus)
+	return chiRouter
+}
+
+func (app *Application) publicRouter() *chi.Mux {
+	// Create non-global registry.
+	reg := prometheus.NewRegistry()
+
+	// Add go runtime metrics and process collectors.
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+
+	chiRouter := chi.NewRouter()
 	chiRouter.Get("/status", app.xdpStatus)
 	chiRouter.Get("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}).ServeHTTP)
 	return chiRouter

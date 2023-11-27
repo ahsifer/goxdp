@@ -17,7 +17,6 @@ import (
 
 // Load XDP program into the provided interfaces
 func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Request) {
-	// app.InfoLog.Print(app.LoadedInterfaces)
 	response.Header().Set("Content-Type", "application/json")
 	//Request body parsing
 	var body load
@@ -111,7 +110,6 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 
 	//parse input interfaces
 	stringSlice := strings.Split(*body.Interfaces, ",")
-	// app.InfoLog.Print(app.LoadedInterfaces)
 	if stringSlice[0] == "all" {
 		if len(app.LoadedInterfaces) == 0 {
 			helpers.Error(response, "No XDP program loaded", http.StatusBadRequest)
@@ -143,7 +141,6 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 			delete(app.LoadedInterfaces, value)
 		}
 	}
-	app.InfoLog.Print(app.LoadedInterfaces)
 	response.WriteHeader(200)
 	return
 }
@@ -203,12 +200,10 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 
 		// Check if the key exists in the timeout map or not
 		// _, ok := app.TimeoutList[key]
-		app.InfoLog.Print(app.TimeoutList)
 
 		if *body.Timeout != 0 {
 			app.TimeoutList[key] = time.Now().Add(time.Duration(*body.Timeout) * time.Second)
 		}
-		app.InfoLog.Print(app.TimeoutList)
 
 	} else if *body.Action == "allow" {
 		err = app.BpfObjects.BlockedIpv4.Delete(&key)
@@ -217,9 +212,7 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
 			return
 		}
-		// app.InfoLog.Print(app.TimeoutList)
 		delete(app.TimeoutList, key)
-		// app.InfoLog.Print(app.TimeoutList)
 
 	} else {
 		helpers.Error(response, "Bad input action", http.StatusBadRequest)

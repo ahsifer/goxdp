@@ -11,8 +11,7 @@ import (
 
 	"log"
 	"net/http"
-	"os"
-	// "strings"
+	"os"	
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf ../source/xdp.c -- -I../headers
@@ -25,8 +24,10 @@ func main() {
 
 	//Handling server flags
 	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	listenIP := serverFlags.String("ip", "127.0.0.1", "IP address will listen to")
-	listenPort := serverFlags.String("port", "8090", "Port number will listen to")
+	privateIP := serverFlags.String("privateIP", "127.0.0.1", "The private IP address the service will listen to that will be used to respond to load,unload,block,allow, and status requests")
+	privatePort := serverFlags.String("privatePort", "8090", "The private Port number the service will listen to")
+	publicIP := serverFlags.String("publicIP", *privateIP, "The public IP address the service will listen to that will be used to respond to metrics and status requests")
+	publicPort := serverFlags.String("publicPort", "8091", "The public Port number the service will listen to")
 	timeoutWorkerInterval := serverFlags.Int("timeoutinterval", 30, "The timeout of the worker thread to check if subnet or IP address timeout is finished")
 	// Handling Client Flags
 	clientFlags := flag.NewFlagSet("client", flag.ExitOnError)
@@ -34,9 +35,9 @@ func main() {
 	interfacesClient := clientFlags.String("interfaces", "", "Interfaces names that the XDP programme will be loaded to (Example 'eth0,eth1')")
 	modeClient := clientFlags.String("mode", "", "The mode that XDP programme will be loaded (available values are nv,skb, and hw)")
 	srcClient := clientFlags.String("src", "", "src IP address or subnet that will be blocked or allowed")
-	timeoutClient := clientFlags.Uint("timeout", 0, "Interval between timeouts checking")
-	serverIPClient := clientFlags.String("ip", "127.0.0.1", "The IP address that the goxdp service is listening to")
-	serverPortClient := clientFlags.String("port", "8090", "The Port that the goxdp service is listening to")
+	timeoutClient := clientFlags.Uint("timeout", 0, "How long the IP address or the subnet will be blocked in seconds")
+	serverIPClient := clientFlags.String("dstIP", "127.0.0.1", "The IP address that the goxdp service is listening to")
+	serverPortClient := clientFlags.String("dstPort", "8090", "The Port that the goxdp service is listening to")
 
 	if os.Args[1] == "server" {
 		serverFlags.Parse(os.Args[2:])
@@ -61,16 +62,34 @@ func main() {
 		}
 		app.BpfObjects = &objs
 
-		srv := &http.Server{
-			Addr:     fmt.Sprintf("%s:%s", *listenIP, *listenPort),
+		//Start public routes
+		pubsrv := &http.Server{
+			Addr:     fmt.Sprintf("%s:%s", *publicIP, *publicPort),
 			ErrorLog: app.ErrorLog,
-			Handler:  app.newRouter(),
+			Handler:  app.publicRouter(),
 		}
-		app.InfoLog.Printf("Starting server on IP: %s, Port: %s", *listenIP, *listenPort)
-		err := srv.ListenAndServe()
+		app.InfoLog.Printf("Starting public routes worker service on IP: %s, Port: %s ....", *publicIP, *publicPort)
+		go func() {
+			err := pubsrv.ListenAndServe()
+			if err != nil {
+				app.ErrorLog.Fatal(err)
+			}
+		}()
+		app.InfoLog.Printf("Public routes worker service started successfully on IP: %s, Port: %s waiting for metrics and status requests", *publicIP, *publicPort)
+
+		//Start private routes
+		prvsrv := &http.Server{
+			Addr:     fmt.Sprintf("%s:%s", *privateIP, *privatePort),
+			ErrorLog: app.ErrorLog,
+			Handler:  app.privateRouter(),
+		}
+		app.InfoLog.Printf("Starting server on IP: %s, Port: %s ....", *privateIP, *privatePort)
+		app.InfoLog.Printf("Started successfully on IP: %s, Port: %s waiting for load,unload,block,allow, and status requests", *privateIP, *privatePort)
+		err := prvsrv.ListenAndServe()
 		if err != nil {
 			app.ErrorLog.Fatal(err)
 		}
+
 	} else if os.Args[1] == "client" {
 		//remove timestamps from the returned logs
 		// newLogger := log.New(os.Stdout, "INFO\t",)
@@ -87,7 +106,7 @@ func main() {
 			log.Print("Action flag cannot be empty")
 			clientFlags.PrintDefaults()
 		} else if *actionClient == "load" {
-			if *interfacesClient == "" && *modeClient == "" {
+			if *interfacesClient == "" || *modeClient == "" {
 				log.Print("Interfaces or mode flags cannot be empty")
 				clientFlags.PrintDefaults()
 			}
@@ -97,7 +116,7 @@ func main() {
 			}
 			log.Print(msg)
 		} else if *actionClient == "unload" {
-			if *interfacesClient == "" && *modeClient == "" {
+			if *interfacesClient == "" {
 				log.Print("Interfaces names cannot be empty")
 				clientFlags.PrintDefaults()
 			}
