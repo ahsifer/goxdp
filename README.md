@@ -35,7 +35,7 @@ Usage of server:
 
 # GoXDP Client
 
-Interacting with the GoXDP service can be in two different ways:
+Interacting with the GoXDP service can be done in two different ways:
 
 [[_TOC_]]
 
@@ -74,7 +74,7 @@ Load XDP filter to multiple interfaces
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-2- Unload the filter from single interface
+2- Unload the filter from a single interface
 
 ```console
 goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
