@@ -1,7 +1,5 @@
 # Table of contents
 
-Interacting with the GoXDP service can be done in two different ways:
-
 [[_TOC_]]
 
 # Introduction
@@ -49,8 +47,6 @@ Two different approaches can be followed to interact with XDP: <br />
 
 The first approach introduces the GoXDP client CLI commands to perform load, unload, block, unblock, and status operations. The available arguments are:
 
-# Command Line Arguments
-
 ```
 ./goxdp client -h
 Usage of client:
@@ -73,6 +69,7 @@ Usage of client:
 ## CLI Operations:
 
 ### 1- Load XDP filter to interface <br />
+
 Load the XDP filter to a single interface
 
 ```
@@ -88,6 +85,7 @@ goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 -
 ### 2- Unload the filter from the interface<br />
 
 Unload the XDP filter from a single interface
+
 ```
 goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
 ```
@@ -122,7 +120,7 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 
 <br />
 
-> Note: Blocking the same IP address or subnet more than once just resets the timeout.
+> Note: Blocking the same IP address or subnet more than once just changes the timeout value.
 
 ### 4- unblock blocked IP address or subnet
 
@@ -130,7 +128,7 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-### 5- show status
+### 5- Show status
 
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
@@ -139,6 +137,7 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ## RestFull API Client
 
 The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints: <br />
+
 ### 1- POST: Load XDP filter to interface
 
 ```
@@ -168,6 +167,7 @@ curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"all
 ```
 curl -X GET http://10.10.10.26:8092/status | jq .
 ```
+
 # Metrics
 
 The following endpoint is used to fetch metrics about the GoXDP service
