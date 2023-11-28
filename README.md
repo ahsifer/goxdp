@@ -66,9 +66,9 @@ Usage of client:
     	How long the IP address or the subnet will be blocked in seconds
 ```
 
-### CLI Operations:
+<h3>CLI Operations:</h3>
 
-#### 1- Load XDP filter to interface <br />
+### 1- Load XDP filter to interface <br />
 
 Load the XDP filter to a single interface
 
@@ -82,7 +82,7 @@ Load XDP filter to multiple interfaces
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-#### 2- Unload the filter from the interface<br />
+### 2- Unload the filter from the interface<br />
 
 Unload the XDP filter from a single interface
 
@@ -102,7 +102,7 @@ Unload the XDP filter from all the interfaces
 goxdp client --action=load --interfaces=all --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-#### 3- block an IP address or subnet
+### 3- block an IP address or subnet
 
 block 10.4.4.0/24 for 100 seconds
 
@@ -122,13 +122,13 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 
 > Note: Blocking the same IP address or subnet more than once just changes the timeout value.
 
-#### 4- unblock blocked IP address or subnet
+### 4- unblock blocked IP address or subnet
 
 ```
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-#### 5- Show status
+### 5- Show status
 
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
