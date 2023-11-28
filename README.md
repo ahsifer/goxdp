@@ -39,9 +39,15 @@ Usage of server:
     	How long the timeout checker thread will wait before checking if there is any IP address or subnet with finished timeout to remove them from the blocked list.
 ```
 
-## GoXDP client CLI
+# GoXDP Client
+
+Two different approaches can be followed to interact with XDP
+
+## GoXDP Client CLI
 
 The first approach introduces the GoXDP client CLI commands to perform load, unload, block, unblock, and status operations. The available arguments are:
+
+# Command Line Arguments
 
 ```
 ./goxdp client -h
@@ -61,6 +67,8 @@ Usage of client:
   -timeout uint
     	How long the IP address or the subnet will be blocked in seconds
 ```
+
+# CLI Operations Instances:
 
 1- Load XDP filter to interface
 
@@ -106,8 +114,11 @@ block 10.4.4.0/24 forever
 goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-> Note: You can block single IP address by passing 10.4.4.4 or 10.4.4.4/32.
-> Note: Blocking the same IP address or subnet more than once just resets the timeout.
+> > > Note: You can block a single IP address by passing 10.4.4.4 or 10.4.4.4/32.
+
+Note: Blocking the same IP address or subnet more than once just resets the timeout.
+
+> > >
 
 4- unblock blocked IP address or subnet
 
@@ -121,7 +132,7 @@ goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-## RestFull API
+## RestFull API Client
 
 The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints:
 1- Load XDP filter to interface
