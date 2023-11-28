@@ -18,7 +18,7 @@ GoXDP is a simple and powerful XDP filter built with kernel-space code built wit
 
 The following include the available command line arguments and their description when starting a new GoXDP service:
 
-```console
+```
 goxdp server -h
 Usage of server:
   -privateIP string
