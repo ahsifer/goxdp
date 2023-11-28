@@ -1,3 +1,9 @@
+# Table of contents
+
+Interacting with the GoXDP service can be done in two different ways:
+
+[[_TOC_]]
+
 # Introduction
 
 GoXDP is a simple and powerful XDP filter built with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands.
@@ -14,7 +20,7 @@ GoXDP is a simple and powerful XDP filter built with kernel-space code built wit
 - Download the latest binary from https://git.elcld.net/e_ahsifer/goxdp/-/releases.
 - Run `goxdp server -privateIP=127.0.0.1` to start goxdp service.
 
-## GoXDP service
+# GoXDP service
 
 The following include the available command line arguments and their description when starting a new GoXDP service:
 
@@ -33,17 +39,11 @@ Usage of server:
     	How long the timeout checker thread will wait before checking if there is any IP address or subnet with finished timeout to remove them from the blocked list.
 ```
 
-# GoXDP Client
-
-Interacting with the GoXDP service can be done in two different ways:
-
-[[_TOC_]]
-
 ## GoXDP client CLI
 
 The first approach introduces the GoXDP client CLI commands to perform load, unload, block, unblock, and status operations. The available arguments are:
 
-```console
+```
 ./goxdp client -h
 Usage of client:
   -action string
@@ -64,31 +64,31 @@ Usage of client:
 
 1- Load XDP filter to interface
 
-```console
+```
 goxdp client --action=load --interfaces=eth0 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 Load XDP filter to multiple interfaces
 
-```console
+```
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 2- Unload the filter from a single interface
 
-```console
+```
 goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
 ```
 
 Load XDP filter to multiple interfaces
 
-```console
+```
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 Load XDP filter from all the interfaces
 
-```console
+```
 goxdp client --action=load --interfaces=all --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
@@ -96,13 +96,13 @@ goxdp client --action=load --interfaces=all --mode=skb --dstIP=127.0.0.1 --dstPo
 
 block 10.4.4.0/24 for 100 seconds
 
-```console
+```
 goxdp client --action=block --src=10.4.4.0/24 --timeout=100 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 block 10.4.4.0/24 forever
 
-```console
+```
 goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
@@ -111,13 +111,13 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 
 4- unblock blocked IP address or subnet
 
-```console
+```
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 5- show status
 
-```console
+```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ```
 
@@ -126,30 +126,30 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints:
 1- Load XDP filter to interface
 
-```console
+```
 curl -X POST http://127.0.0.1:8090/load -d '{"interfaces":"eth0","mode":"skb"}'
 ```
 
 2- Unload XDP filter
 
-```console
+```
 curl -X POST http://127.0.0.1:8090/unload -d '{"interfaces":"eth0"}'
 ```
 
 3- Block an IP address or subnet
 
-```console
+```
 curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"block","timeout":"500"}'
 ```
 
 4- Unblock an IP address or subnet
 
-```console
+```
 curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"allow","timeout":"500"}'
 ```
 
 5- show status
 
-```console
+```
 curl -X GET http://10.10.10.26:8092/status | jq .
 ```
