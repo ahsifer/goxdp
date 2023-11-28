@@ -70,9 +70,10 @@ Usage of client:
     	How long the IP address or the subnet will be blocked in seconds
 ```
 
-# CLI Operations Instances:
+## CLI Operations:
 
-1- Load XDP filter to interface
+### 1- Load XDP filter to interface <br />
+Load the XDP filter to a single interface
 
 ```
 goxdp client --action=load --interfaces=eth0 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
@@ -84,25 +85,26 @@ Load XDP filter to multiple interfaces
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-2- Unload the filter from a single interface
+### 2- Unload the filter from the interface<br />
 
+Unload the XDP filter from a single interface
 ```
 goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
 ```
 
-Load XDP filter to multiple interfaces
+Unload the XDP filter from multiple interfaces
 
 ```
 goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-Load XDP filter from all the interfaces
+Unload the XDP filter from all the interfaces
 
 ```
 goxdp client --action=load --interfaces=all --mode=skb --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-3- block an IP address or subnet
+### 3- block an IP address or subnet
 
 block 10.4.4.0/24 for 100 seconds
 
@@ -122,13 +124,13 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 
 > Note: Blocking the same IP address or subnet more than once just resets the timeout.
 
-4- unblock blocked IP address or subnet
+### 4- unblock blocked IP address or subnet
 
 ```
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-5- show status
+### 5- show status
 
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
@@ -137,32 +139,39 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ## RestFull API Client
 
 The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints: <br />
-1- Load XDP filter to interface
+### 1- POST: Load XDP filter to interface
 
 ```
 curl -X POST http://127.0.0.1:8090/load -d '{"interfaces":"eth0","mode":"skb"}'
 ```
 
-2- Unload XDP filter
+### 2- POST: Unload XDP filter
 
 ```
 curl -X POST http://127.0.0.1:8090/unload -d '{"interfaces":"eth0"}'
 ```
 
-3- Block an IP address or subnet
+### 3- POST: Block an IP address or subnet
 
 ```
 curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"block","timeout":"500"}'
 ```
 
-4- Unblock an IP address or subnet
+### 4- POST: Unblock an IP address or subnet
 
 ```
 curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"allow","timeout":"500"}'
 ```
 
-5- show status
+### 5- GET: show status
 
 ```
 curl -X GET http://10.10.10.26:8092/status | jq .
+```
+# Metrics
+
+The following endpoint is used to fetch metrics about the GoXDP service
+
+```
+curl -X GET http://127.0.0.1:8091/metrics
 ```
