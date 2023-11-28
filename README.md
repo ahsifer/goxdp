@@ -87,7 +87,7 @@ goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 -
 Unload the XDP filter from a single interface
 
 ```
-goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
+goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 Unload the XDP filter from multiple interfaces
