@@ -4,7 +4,7 @@
 
 # Introduction
 
-GoXDP is a simple and powerful XDP filter built with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands.
+GoXDP is a simple and powerful XDP filter with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands.
 ![golang-logo](golang-logo.png)
 
 # Quick Start
@@ -93,13 +93,13 @@ goxdp client --action=unload --interfaces=eth0 --dstIP=127.0.0.1 --dstPort=8091
 Unload the XDP filter from multiple interfaces
 
 ```
-goxdp client --action=load --interfaces=eth0,eth1 --mode=skb --dstIP=127.0.0.1 --dstPort=8090
+goxdp client --action=unload --interfaces=eth0,eth1 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 Unload the XDP filter from all the interfaces
 
 ```
-goxdp client --action=load --interfaces=all --mode=skb --dstIP=127.0.0.1 --dstPort=8090
+goxdp client --action=unload --interfaces=all --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 ### 3- block an IP address or subnet
@@ -122,7 +122,7 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 
 > Note: Blocking the same IP address or subnet more than once just changes the timeout value.
 
-### 4- unblock blocked IP address or subnet
+### 4- unblock an IP address or subnet
 
 ```
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
@@ -130,6 +130,10 @@ goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 
 ### 5- Show status
 
+```
+goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
+```
+or
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ```
@@ -153,19 +157,25 @@ curl -X POST http://127.0.0.1:8090/unload -d '{"interfaces":"eth0"}'
 ### 3- POST: Block an IP address or subnet
 
 ```
-curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"block","timeout":"500"}'
+curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"block","timeout":500}'
 ```
 
 ### 4- POST: Unblock an IP address or subnet
 
 ```
-curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"allow","timeout":"500"}'
+curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"allow","timeout":500}'
 ```
 
 ### 5- GET: show status
 
 ```
-curl -X GET http://10.10.10.26:8092/status | jq .
+curl -X GET http://127.0.0.1:8090/status | jq .
+```
+
+or
+
+```
+curl -X GET http://127.0.0.1:8091/status | jq .
 ```
 
 # Metrics
