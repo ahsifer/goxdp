@@ -133,7 +133,9 @@ goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ```
+
 or
+
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 ```
