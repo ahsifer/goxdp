@@ -11,7 +11,7 @@ GoXDP is a simple and powerful XDP filter with kernel-space code built with C an
 
 ## Quick Start for GoXDP on Docker
 
-`docker run -d --network host --name goxdp --privileged --restart always git.elcld.net:9000/e_ahsifer/goxdp:1.0 server -privateIP=127.0.0.1`
+`docker run -d --network host --name goxdp --privileged --restart always ahsifer/goxdp:2.0 server -privateIP=127.0.0.1`
 
 ## Quick Start for GoXDP binary
 
