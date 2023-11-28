@@ -41,9 +41,11 @@ Usage of server:
 
 # GoXDP Client
 
-Two different approaches can be followed to interact with XDP
+Two different approaches can be followed to interact with XDP:
+1- Using GoXDP CLI client
+2- Using RestFul API
 
-## GoXDP Client CLI
+## GoXDP CLI Client
 
 The first approach introduces the GoXDP client CLI commands to perform load, unload, block, unblock, and status operations. The available arguments are:
 
