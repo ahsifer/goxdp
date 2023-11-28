@@ -28,11 +28,11 @@ The following include the available command line arguments and their description
 goxdp server -h
 Usage of server:
   -privateIP string
-    	The private IP address the service will listen to that will be used to respond to load,unload,block,allow, and status requests (default "127.0.0.1")
+    	The private IP address the service will listen to, that will be used to respond to load,unload,block,allow, and status requests (default "127.0.0.1")
   -privatePort string
     	The private Port number the service will listen to (default "8090")
   -publicIP string
-    	The public IP address the service will listen to that will be used to respond to metrics and status requests (default "127.0.0.1")
+    	The public IP address the service will listen to, that will be used to respond to metrics and status requests (default "127.0.0.1")
   -publicPort string
     	The public Port number the service will listen to (default "8091")
   -timeoutinterval int
@@ -41,9 +41,9 @@ Usage of server:
 
 # GoXDP Client
 
-Two different approaches can be followed to interact with XDP:
-1- Using GoXDP CLI client
-2- Using RestFul API
+Two different approaches can be followed to interact with XDP: <br />
+1- Using GoXDP CLI client <br />
+2- Using RestFul API <br />
 
 ## GoXDP CLI Client
 
@@ -116,11 +116,11 @@ block 10.4.4.0/24 forever
 goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-> > > Note: You can block a single IP address by passing 10.4.4.4 or 10.4.4.4/32.
+> Note: You can block a single IP address by passing 10.4.4.4 or 10.4.4.4/32.
 
-Note: Blocking the same IP address or subnet more than once just resets the timeout.
+<br />
 
-> > >
+> Note: Blocking the same IP address or subnet more than once just resets the timeout.
 
 4- unblock blocked IP address or subnet
 
@@ -136,7 +136,7 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 
 ## RestFull API Client
 
-The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints:
+The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints: <br />
 1- Load XDP filter to interface
 
 ```
