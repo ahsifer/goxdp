@@ -137,7 +137,7 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
 or
 
 ```
-goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
+goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8091
 ```
 
 ## RestFull API Client
