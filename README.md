@@ -66,7 +66,7 @@ Usage of client:
     	How long the IP address or the subnet will be blocked in seconds
 ```
 
-<h3>CLI Operations:</h3>
+**CLI Operations:**
 
 ### 1- Load XDP filter to interface <br />
 
