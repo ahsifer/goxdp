@@ -30,6 +30,8 @@ func (app *Application) privateRouter() *chi.Mux {
 	chiRouter.Post("/unload", app.xdpUnload)
 	chiRouter.Post("/block", app.xdpBlock)
 	chiRouter.Get("/status", app.xdpStatus)
+	chiRouter.Post("/flushblocked", app.xdpBlockedFlush)
+	chiRouter.Post("/flushstatus", app.xdpStatusFlush)
 	return chiRouter
 }
 

@@ -11,7 +11,7 @@ import (
 
 	"log"
 	"net/http"
-	"os"	
+	"os"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf ../source/xdp.c -- -I../headers
@@ -38,6 +38,7 @@ func main() {
 	timeoutClient := clientFlags.Uint("timeout", 0, "How long the IP address or the subnet will be blocked in seconds")
 	serverIPClient := clientFlags.String("dstIP", "127.0.0.1", "The IP address that the goxdp service is listening to")
 	serverPortClient := clientFlags.String("dstPort", "8090", "The Port that the goxdp service is listening to")
+	flush := clientFlags.Bool("flush", false, "Passed alongside with the actions status,block,allow to flush the status or blocked IP addresses or subnets tables")
 
 	if os.Args[1] == "server" {
 		serverFlags.Parse(os.Args[2:])
@@ -92,7 +93,6 @@ func main() {
 
 	} else if os.Args[1] == "client" {
 		//remove timestamps from the returned logs
-		// newLogger := log.New(os.Stdout, "INFO\t",)
 		log.SetFlags(0)
 		//Begin Client Section
 		clientFlags.Parse(os.Args[2:])
@@ -126,6 +126,14 @@ func main() {
 			}
 			log.Print(msg)
 		} else if *actionClient == "allow" || *actionClient == "block" {
+			if *flush == true {
+				msg, err := clientApp.FlushBlockedXDP()
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Print(msg)
+				return
+			}
 			//check if IP address or subnet is valid
 			if _, err := helpers.IpChecker(*srcClient); err != nil {
 				log.Fatal(err)
@@ -139,11 +147,21 @@ func main() {
 			}
 			log.Print(msg)
 		} else if *actionClient == "status" {
-			msg, err := clientApp.StatusXDP()
-			if err != nil {
-				log.Fatal(err)
+			if *flush == false {
+				msg, err := clientApp.StatusXDP()
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Print(msg)
+			} else {
+				//Handle if flush status is true
+				msg, err := clientApp.FlushStatusXDP()
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Print(msg)
 			}
-			log.Print(msg)
+
 		}
 
 	} else {

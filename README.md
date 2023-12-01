@@ -128,7 +128,13 @@ goxdp client --action=block --src=10.4.4.0/24 --timeout=0 --dstIP=127.0.0.1 --ds
 goxdp client --action=allow --src=10.4.4.0/24 --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-### 5- Show status
+### 5- unblock all the IP addresses and subnets
+
+```
+goxdp client --action=block --flush --dstIP=127.0.0.1 --dstPort=8090
+```
+
+### 6- Show status
 
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8090
@@ -138,6 +144,12 @@ or
 
 ```
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8091
+```
+
+### 6- empty status table
+
+```
+goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
 ```
 
 ## RestFull API Client
@@ -168,7 +180,13 @@ curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"blo
 curl -X POST http://127.0.0.1:8090/block -d '{"src":"127.0.0.2/32","action":"allow","timeout":500}'
 ```
 
-### 5- GET: show status
+### 5- POST: Unblock all the IP addresses and subnets
+
+```
+curl -X POST http://127.0.0.1:8090/flushblocked
+```
+
+### 6- GET: show status
 
 ```
 curl -X GET http://127.0.0.1:8090/status | jq .
@@ -178,6 +196,12 @@ or
 
 ```
 curl -X GET http://127.0.0.1:8091/status | jq .
+```
+
+### 7- POST: empty status table
+
+```
+curl -X GET http://127.0.0.1:8090/flushstatus
 ```
 
 # Metrics
