@@ -1,7 +1,3 @@
-# Table of contents
-
-[[_TOC_]]
-
 # Introduction
 
 GoXDP is a simple and powerful XDP filter with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands.
