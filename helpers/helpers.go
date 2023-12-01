@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -68,7 +67,6 @@ func IntToIPv4(decimal uint32) string {
 	output := ""
 	bs := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bs, decimal)
-	log.Print(bs, " soso")
 	output = fmt.Sprintf("%v.%v.%v.%v", bs[0], bs[1], bs[2], bs[3])
 	return output
 }

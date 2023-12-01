@@ -170,5 +170,46 @@ func (app *ClientAPP) StatusXDP() (string, error) {
 		outMsg += fmt.Sprintf("\t%d- %s\t\t\t%d\t\t\t%d\n", index+1, value.Src, value.Rx_packets, value.Size_packets)
 	}
 	return outMsg, nil
+}
 
+func (app *ClientAPP) FlushStatusXDP() (string, error) {
+	resp, err := http.Post("http://"+app.ServerIP+":"+app.ServerPort+"/flushstatus", "application/json", nil)
+	if err != nil {
+		return "", errors.New("Error in sending POST request -> " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	if resp.Status == "200 OK" {
+		return "Flushed successfully", nil
+	} else {
+		var errorMessage ErrorStatusMessage
+		//Parse json body
+		err = json.NewDecoder(resp.Body).Decode(&errorMessage)
+		if err != nil {
+
+			return "", errors.New("Bad Json Returned from the server ->: %v" + err.Error())
+		}
+		return errorMessage.Message, nil
+	}
+}
+
+func (app *ClientAPP) FlushBlockedXDP() (string, error) {
+	resp, err := http.Post("http://"+app.ServerIP+":"+app.ServerPort+"/flushblocked", "application/json", nil)
+	if err != nil {
+		return "", errors.New("Error in sending POST request -> " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	if resp.Status == "200 OK" {
+		return "Flushed successfully", nil
+	} else {
+		var errorMessage ErrorStatusMessage
+		//Parse json body
+		err = json.NewDecoder(resp.Body).Decode(&errorMessage)
+		if err != nil {
+
+			return "", errors.New("Bad Json Returned from the server ->: %v" + err.Error())
+		}
+		return errorMessage.Message, nil
+	}
 }

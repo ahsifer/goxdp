@@ -3,21 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
-	"net/http"
-	"net/netip"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/ahsifer/goxdp/helpers"
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
+	"net"
+	"net/http"
+	"net/netip"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Load XDP program into the provided interfaces
 func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Request) {
-	// app.InfoLog.Print(app.LoadedInterfaces)
 	response.Header().Set("Content-Type", "application/json")
 	//Request body parsing
 	var body load
@@ -111,7 +110,6 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 
 	//parse input interfaces
 	stringSlice := strings.Split(*body.Interfaces, ",")
-	// app.InfoLog.Print(app.LoadedInterfaces)
 	if stringSlice[0] == "all" {
 		if len(app.LoadedInterfaces) == 0 {
 			helpers.Error(response, "No XDP program loaded", http.StatusBadRequest)
@@ -143,7 +141,6 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 			delete(app.LoadedInterfaces, value)
 		}
 	}
-	app.InfoLog.Print(app.LoadedInterfaces)
 	response.WriteHeader(200)
 	return
 }
@@ -203,12 +200,10 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 
 		// Check if the key exists in the timeout map or not
 		// _, ok := app.TimeoutList[key]
-		app.InfoLog.Print(app.TimeoutList)
 
 		if *body.Timeout != 0 {
 			app.TimeoutList[key] = time.Now().Add(time.Duration(*body.Timeout) * time.Second)
 		}
-		app.InfoLog.Print(app.TimeoutList)
 
 	} else if *body.Action == "allow" {
 		err = app.BpfObjects.BlockedIpv4.Delete(&key)
@@ -217,9 +212,7 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
 			return
 		}
-		// app.InfoLog.Print(app.TimeoutList)
 		delete(app.TimeoutList, key)
-		// app.InfoLog.Print(app.TimeoutList)
 
 	} else {
 		helpers.Error(response, "Bad input action", http.StatusBadRequest)
@@ -234,8 +227,10 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 	//prepare status for the blocked IP addresses
 	statusMapOutput := []statusMapJson{}
 	iter := app.BpfObjects.Status.Iterate()
+	//the key to single status map is ip address
 	var key netip.Addr
-	val := make([]bpfStatusMapVal, app.BpfObjects.Status.MaxEntries())
+	//Since the status map is LRU per cpu hash map then the returned value for each key is array size equal to the cpu cores
+	val := make([]bpfStatusMapVal, runtime.NumCPU())
 	for iter.Next(&key, &val) {
 		var rx_packets uint64 = 0
 		var size_packets uint64 = 0
@@ -274,7 +269,7 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 		loadedInterfaces = append(loadedInterfaces, key)
 	}
 
-	// output.Timeout = app.TimeoutList
+	//prepare the timeouts of the blocked subnets
 	timeoutOutput := []statusTimeoutOutput{}
 	for srcKey, timeValue := range app.TimeoutList {
 		timeoutOutput = append(timeoutOutput, statusTimeoutOutput{
@@ -298,5 +293,82 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 	}
 
 	response.Write(finalResponse)
+	return
+}
+
+// status XDP programs
+func (app *Application) xdpBlockedFlush(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	//the array that will store the blocked IP addresses and subnets
+	var blockedMap []BpfIpv4LpmKey
+	//prepare the blocked IP addresses from the LPM map
+	var blockedMapKey uint64
+	var blockedMapVal uint8
+	iter := app.BpfObjects.BlockedIpv4.Iterate()
+	for iter.Next(&blockedMapKey, &blockedMapVal) {
+		ip := (uint32)((blockedMapKey & 0xFFFFFFFF00000000) >> 32)
+		prefix := (uint32)(blockedMapKey & 0xFFFFFFFF)
+		//append the returned subnet to the blockedMap
+		key := BpfIpv4LpmKey{
+			Prefixlen: prefix,
+			Saddr:     ip,
+		}
+		blockedMap = append(blockedMap, key)
+	}
+	if err := iter.Err(); err != nil {
+		app.InfoLog.Print(err)
+	}
+
+	//loop on the blocked map and unblock the subnets
+	for _, value := range blockedMap {
+		err := app.BpfObjects.BlockedIpv4.Delete(&value)
+		if err != nil {
+			app.InfoLog.Print(err.Error())
+			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
+			return
+		}
+		delete(app.TimeoutList, value)
+	}
+
+	response.WriteHeader(200)
+	return
+}
+
+// status XDP programs
+func (app *Application) xdpStatusFlush(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	//prepare status array for the IP addresses in the status map
+	statusMapOutput := []netip.Addr{}
+	iter := app.BpfObjects.Status.Iterate()
+	//the key of the status map is single IP address
+	var key netip.Addr
+	//Since the status map is LRU per cpu hash map then the returned value for each key is array size equal to the cpu cores
+	val := make([]bpfStatusMapVal, runtime.NumCPU())
+	for iter.Next(&key, &val) {
+		var rx_packets uint64 = 0
+		var size_packets uint64 = 0
+		for _, value := range val {
+			rx_packets += value.RxPackets
+			size_packets += value.SizePackets
+		}
+		statusMapOutput = append(statusMapOutput, key)
+	}
+	if err := iter.Err(); err != nil {
+		app.InfoLog.Print(err)
+	}
+
+	//loop on the status map and remove them from the map the subnets
+	for _, value := range statusMapOutput {
+		err := app.BpfObjects.Status.Delete(&value)
+		if err != nil {
+			app.InfoLog.Print(err.Error())
+			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	response.WriteHeader(200)
 	return
 }
