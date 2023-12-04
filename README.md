@@ -146,7 +146,7 @@ or
 goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8091
 ```
 
-### 6- empty status table
+### 7- empty status table
 
 ```
 goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
