@@ -5,7 +5,7 @@
 # Introduction
 
 GoXDP is a simple and powerful XDP filter with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands. <br>
-![golang-logo](golang-logo.png){width=70%}
+![golang-logo](golang-logo.png){width=60%}
 
 # Quick Start
 
@@ -54,10 +54,7 @@ Usage of server:
 
 As the number of goxdp instances increases, The effort needed and complexity to manage them increases. Therefore, We introduce the Master-Slave communication where a single node acts as a master and multiple goxdp slaves are connected to it. Furthermore, all the block and unblock operations will be managed from a single master node. The following diagram describes the cluster setup. <br>
 
-<!-- ![master-slave](master-slave.png){width=70%} -->
-<p align="center">
-  <img src="master-slave.png" alt="master-slave diagram" style="width:50%;">
-</p>
+![master-slave](master-slave.png){width=70%}
 
 # GoXDP Client
 
