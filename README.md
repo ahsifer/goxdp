@@ -91,9 +91,9 @@ Usage of client:
     	Used for authentication purposes when contacting the master service
 ```
 
-**CLI Operations:**
+## CLI Operations:
 
-> Note: all the following operations can be used with the master service only the following parameters needs to be added
+> Note: all the following operations can be used with the master service only the following parameters needs to be added <br>
 > 1- username
 > 2- token
 > 3- protocol
