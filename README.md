@@ -56,7 +56,7 @@ As the number of goxdp instances increases, The effort needed and complexity to 
 
 <!-- ![master-slave](master-slave.png){width=70%} -->
 <p align="center">
-  <img src="master-slave.png" alt="master-slave diagram" style="width:70%;">
+  <img src="master-slave.png" alt="master-slave diagram" style="width:50%;">
 </p>
 
 # GoXDP Client
