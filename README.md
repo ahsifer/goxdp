@@ -53,7 +53,11 @@ Usage of server:
 # GoXDP Master Service
 
 As the number of goxdp instances increases, The effort needed and complexity to manage them increases. Therefore, We introduce the Master-Slave communication where a single node acts as a master and multiple goxdp slaves are connected to it. Furthermore, all the block and unblock operations will be managed from a single master node. The following diagram describes the cluster setup. <br>
-![master-slave](master-slave.png){width=70%}
+
+<!-- ![master-slave](master-slave.png){width=70%} -->
+<p align="center">
+  <img src="master-slave.png" alt="master-slave diagram" width=70%>
+</p>
 
 # GoXDP Client
 
