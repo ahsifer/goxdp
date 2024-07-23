@@ -31,10 +31,10 @@ func main() {
 	publicIP := serverFlags.String("publicIP", *privateIP, "The public IP address the service will listen to that will be used to respond to metrics and status requests")
 	publicPort := serverFlags.String("publicPort", "8091", "The public Port number the service will listen to")
 	timeoutWorkerInterval := serverFlags.Int("timeoutInterval", 30, "The timeout interval of the worker thread to check if subnet or IP address timeout is finished")
-	enMaster := serverFlags.Bool("master", false, "Enable master slave communication")
+	enMaster := serverFlags.Bool("master", false, "Enable master-slave communication")
 	validMasterSSL := serverFlags.Bool("validSSL", false, "Enable when the master uses valid SSL certificate (useful when the chosen protocol is https)")
 	slaveMasterIP := serverFlags.String("masterIP", "127.0.0.1", "The IP address of the master service")
-	slaveMasterPort := serverFlags.String("masterPort", "127.0.0.1", "The port number that the master service is listening to")
+	slaveMasterPort := serverFlags.String("masterPort", "9999", "The port number that the master service is listening to")
 	slaveMasterProtocol := serverFlags.String("protocol", "http", "use http or https to communicate with the master")
 	slavePullInterval := serverFlags.Int("masterPullInterval", 5, "The timeout interval between checking for updates from the master")
 
@@ -49,10 +49,10 @@ func main() {
 	serverPortClient := clientFlags.String("dstPort", "8090", "The Port that the goxdp service is listening to")
 	flush := clientFlags.Bool("flush", false, "Passed alongside with the actions status,block,allow to flush the status or blocked IP addresses or subnets tables")
 	clientProtocol := clientFlags.String("protocol", "http", "use http or https (Useful when the master service using HTTPS)")
-	validSSL := clientFlags.Bool("validSSL", false, "Validate destination certificate when protocol parameter is true (Useful when the master service is using valid certificate)")
-	targetMaster := clientFlags.Bool("master", false, "Destination hosts is master or not")
-	username := clientFlags.String("username", "", "Useful when contacting the master service")
-	token := clientFlags.String("token", "", "Useful when contacting the master service")
+	validSSL := clientFlags.Bool("validSSL", false, "Validate destination certificate when the protocol parameter is https (Useful when the master service is using valid certificate)")
+	targetMaster := clientFlags.Bool("master", false, "Destination host is a master or not")
+	username := clientFlags.String("username", "", "Used for authentication purposes when contacting the master service")
+	token := clientFlags.String("token", "", "Used for authentication purposes when contacting the master service")
 
 	//Handling Master Flags
 	masterFlags := flag.NewFlagSet("master", flag.ExitOnError)
