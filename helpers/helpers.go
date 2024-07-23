@@ -77,3 +77,32 @@ func Ipv4Reverse(IPv4Addr string) string {
 	return outString
 
 }
+
+// This helper function will remove the element from the array and will reslice it.
+func RemoveAndResliceArrayMap[T any](slice []T, index int) []T {
+	slice[index] = slice[len(slice)-1]
+	return slice[:len(slice)-1]
+}
+
+func PrepareXDPIP(IP string) (uint32, uint32, error) {
+	//Check if input IP is valid
+	validIP, err := IpChecker(IP)
+	if err != nil {
+		fmt.Printf("Invalid IP address or subnet -> %s", err)
+		return 0, 0, errors.New("invalid request body")
+	}
+	ipAndPrefix := strings.Split(*validIP, "/")
+	prefix, err := strconv.ParseUint(ipAndPrefix[1], 10, 32)
+	if err != nil {
+		errMsg := "Input prefix cannot be parsed to unit32 -> " + err.Error()
+		fmt.Print(errMsg)
+		return 0, 0, errors.New(errMsg)
+	}
+	//Convert the IP address to decimal with big endian format
+	decimalIP, err := IP4toInt(ipAndPrefix[0])
+	if err != nil {
+		fmt.Printf("Cannot convert input IP address to big endian decimal format -> %s", err)
+		return 0, 0, errors.New("bad request")
+	}
+	return uint32(prefix), *decimalIP, nil
+}

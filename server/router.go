@@ -10,7 +10,7 @@ import (
 	// "net/http"
 )
 
-func (app *Application) privateRouter() *chi.Mux {
+func (app *Application) serverPrivateRouter() *chi.Mux {
 	// Create non-global registry.
 	reg := prometheus.NewRegistry()
 
@@ -21,7 +21,7 @@ func (app *Application) privateRouter() *chi.Mux {
 	)
 
 	chiRouter := chi.NewRouter()
-	chiRouter.Use(middleware.Logger)
+	// chiRouter.Use(middleware.Logger)
 	chiRouter.Use(middleware.Recoverer)
 	chiRouter.Use(middleware.CleanPath)
 	chiRouter.Use(middleware.RealIP)
@@ -35,7 +35,7 @@ func (app *Application) privateRouter() *chi.Mux {
 	return chiRouter
 }
 
-func (app *Application) publicRouter() *chi.Mux {
+func (app *Application) serverPublicRouter() *chi.Mux {
 	// Create non-global registry.
 	reg := prometheus.NewRegistry()
 

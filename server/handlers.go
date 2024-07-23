@@ -81,7 +81,6 @@ func (app *Application) xdpLoad(response http.ResponseWriter, request *http.Requ
 		app.LoadedInterfaces[value] = l
 	}
 	response.WriteHeader(200)
-	return
 }
 
 // unload XDP programs
@@ -142,7 +141,6 @@ func (app *Application) xdpUnload(response http.ResponseWriter, request *http.Re
 		}
 	}
 	response.WriteHeader(200)
-	return
 }
 
 // status XDP programs
@@ -164,30 +162,12 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	//Check if input IP is valid
-	validIP, err := helpers.IpChecker(*body.Src)
+	key := BpfIpv4LpmKey{}
+	key.Prefixlen, key.Saddr, err = helpers.PrepareXDPIP(*body.Src)
 	if err != nil {
-		app.ErrorLog.Printf("Invalid IP address or subnet -> %s", err)
-		helpers.Error(response, "Invalid Request Body", http.StatusBadRequest)
-	}
-	stringSlice := strings.Split(*validIP, "/")
-	prefix, err := strconv.ParseUint(stringSlice[1], 10, 32)
-	if err != nil {
-		errMsg := "Input prefix cannot be parsed to unit32 -> " + err.Error()
-		app.ErrorLog.Print(errMsg)
-		helpers.Error(response, errMsg, http.StatusBadRequest)
+		app.ErrorLog.Println("Cannot parse input IP address or subnet --> ", err)
+		helpers.Error(response, "Invalid input IP address", http.StatusBadRequest)
 		return
-	}
-	//Convert the IP address to decimal with big endian format
-	decimalIP, err := helpers.IP4toInt(stringSlice[0])
-	if err != nil {
-		app.ErrorLog.Printf("Cannot convert input IP address to big endian decimal format -> %s", err)
-		helpers.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-	key := BpfIpv4LpmKey{
-		Prefixlen: uint32(prefix),
-		Saddr:     *decimalIP,
 	}
 
 	if *body.Action == "block" {
@@ -197,9 +177,15 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 			helpers.Error(response, "Unable to update blocked_ipv4 LPM map", http.StatusInternalServerError)
 			return
 		}
-
-		// Check if the key exists in the timeout map or not
-		// _, ok := app.TimeoutList[key]
+		// app.LocalBlockedList[key] = true
+		//Add the IP address to the list of blocked IP addresses
+		tempIP := internalIP{
+			key:        key,
+			cliBlocked: true,
+		}
+		app.BlockedList = append(app.BlockedList, tempIP)
+		//Add the key to the map of CLI blocked IP addresses
+		app.BlockedListPointers[key] = len(app.BlockedList) - 1
 
 		if *body.Timeout != 0 {
 			app.TimeoutList[key] = time.Now().Add(time.Duration(*body.Timeout) * time.Second)
@@ -212,13 +198,21 @@ func (app *Application) xdpBlock(response http.ResponseWriter, request *http.Req
 			helpers.Error(response, "IP address or subnet already not blocked", http.StatusInternalServerError)
 			return
 		}
+		//get element index in the BlockedList array from the BlockedListPointers
+		//At this point we know that the IP address is already blocked. Therefore, no need to check if the IP address exists in the BlockedListPointers map
+		// index := app.BlockedListPointers[key]
+		// app.BlockedList = helpers.RemoveAndResliceArrayMap(app.BlockedList, index)
+		// delete(app.BlockedListPointers, key)
+		lastElement := app.BlockedList[len(app.BlockedList)-1]
+		index := app.BlockedListPointers[key]
+		app.BlockedList = helpers.RemoveAndResliceArrayMap(app.BlockedList, index)
+		app.BlockedListPointers[lastElement.key] = index
 		delete(app.TimeoutList, key)
 
 	} else {
 		helpers.Error(response, "Bad input action", http.StatusBadRequest)
 	}
 	response.WriteHeader(200)
-	return
 }
 
 func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Request) {
@@ -293,7 +287,6 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 	}
 
 	response.Write(finalResponse)
-	return
 }
 
 // status XDP programs
@@ -332,7 +325,6 @@ func (app *Application) xdpBlockedFlush(response http.ResponseWriter, request *h
 	}
 
 	response.WriteHeader(200)
-	return
 }
 
 // status XDP programs
@@ -370,5 +362,4 @@ func (app *Application) xdpStatusFlush(response http.ResponseWriter, request *ht
 	}
 
 	response.WriteHeader(200)
-	return
 }

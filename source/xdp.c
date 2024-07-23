@@ -27,7 +27,7 @@ struct {
 	__uint(type, BPF_MAP_TYPE_LPM_TRIE);
 	__uint(key_size, 8);
 	__uint(value_size, 1);
-	__uint(max_entries, 50);
+	__uint(max_entries, MAX_MAP_LPM_ENTRIES);
 	__uint(map_flags, BPF_F_NO_PREALLOC);
 } blocked_ipv4 SEC(".maps");
 
