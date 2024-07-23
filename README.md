@@ -50,6 +50,11 @@ Usage of server:
 
 ```
 
+# GoXDP Master Service
+
+As the number of goxdp instances increases, The effort needed and complexity to manage them increases. Therefore, We introduce the Master-Slave communication where a single node acts as a master and multiple goxdp slaves are connected to it. Furthermore, all the block and unblock operations will be managed from a single master node. The following diagram describes the cluster setup
+![master-slave](master-slave.png)
+
 # GoXDP Client
 
 Two different approaches can be followed to interact with XDP: <br />
@@ -80,11 +85,11 @@ Usage of client:
   -timeout uint
     	How long the IP address or the subnet will be blocked in seconds
   -master
-    	Destination host is a master or not
+    	Destination host is a master or not (default false)
   -protocol string
     	use http or https (Useful when the master service using HTTPS) (default "http")
   -validSSL
-    	Validate destination certificate when protocol parameter is true (Useful when the master service is using valid certificate)
+    	Validate destination certificate when protocol parameter is true (Useful when the master service is using valid certificate) (default false)
   -username string
     	Used for authentication purposes when contacting the master service
   -token string
@@ -94,10 +99,13 @@ Usage of client:
 ## CLI Operations:
 
 > Note: all the following operations can be used with the master service only the following parameters needs to be added <br>
-> 1- username
-> 2- token
-> 3- protocol
-> 4- validSSl
+> 1- master <br>
+> 2- protocol <br>
+> 3- validSSl <br>
+> 4- username <br>
+> 5- token <br>
+
+> Note: Only the load and unload cannot be used with the master service
 
 ### 1- Load XDP filter to interface <br />
 
@@ -183,11 +191,23 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8091
 goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
 ```
 
-### 8- master CLI operations
+### 8- Increase master's pull counter
+
+```
+goxdp client --action=increment --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+```
+
+### 9- Reload master's configuration files (reread internal.json, blocked.list, and auth.json)
+
+```
+goxdp client --action=reload --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+```
 
 ## RestFull API Client
 
-The second approach to interact with GoXDP is using the GET and POST request to the restful endpoints: <br />
+> Note: all the following http requests can be used with the master service (except for load and unload) only the following two headers needs to be added <br>
+> 1- username <br>
+> 2- token <br>
 
 ### 1- POST: Load XDP filter to interface
 
@@ -232,6 +252,18 @@ curl -X GET http://127.0.0.1:8091/status | jq .
 ```
 
 ### 7- POST: empty status table
+
+```
+curl -X GET http://127.0.0.1:8090/flushstatus
+```
+
+### 8- POST: Increment master's pull counter
+
+```
+curl -X POST -k --header "username:test" --header "token:test" https://127.0.0.1:9999/increment
+```
+
+### 9- POST: reload master's configuration
 
 ```
 curl -X GET http://127.0.0.1:8090/flushstatus

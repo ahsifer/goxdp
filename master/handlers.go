@@ -115,6 +115,7 @@ func (mApp *MasterAPP) xdpIncrementPullCounter(response http.ResponseWriter, req
 }
 
 func (mApp *MasterAPP) xdpReloadConf(response http.ResponseWriter, request *http.Request) {
+	mApp.InfoLog.Println("Received request to reload configuration from " + request.Header.Get("username"))
 	err := mApp.LoadBlockedConf()
 	if err != nil {
 		mApp.ErrorLog.Fatal(err)
@@ -131,12 +132,12 @@ func (mApp *MasterAPP) xdpReloadConf(response http.ResponseWriter, request *http
 	}
 
 	//load the slaves configuration file from slaves.json
-	err = mApp.LoadSlavesConfig()
-	if err != nil {
-		mApp.ErrorLog.Fatal(err)
-		helpers.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	// err = mApp.LoadSlavesConfig()
+	// if err != nil {
+	// 	mApp.ErrorLog.Fatal(err)
+	// 	helpers.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
-	}
+	// }
 
 	//load the Internal configuration file contents into the memory
 	err = mApp.LoadInternalConf()

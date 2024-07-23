@@ -141,7 +141,6 @@ func (mApp *MasterAPP) LoadInternalConf() error {
 			return errors.New("Cannot write json data to the internal config file " + mApp.InternalConfPath + " --> " + err.Error())
 		}
 		mApp.InfoLog.Println("Internal configuration file " + mApp.InternalConfPath + " has been created successfully")
-
 		return nil
 	}
 	//the internal json configuration file exits and needs to be read
@@ -160,7 +159,8 @@ func (mApp *MasterAPP) LoadInternalConf() error {
 		tempCliHashMap[*(value.Src)] = index
 	}
 	mApp.CliBlockedIPsHashMap = tempCliHashMap
-	mApp.InfoLog.Println("Internal configuration file " + mApp.InternalConfPath + " has been read successfully")
+	// mApp.InfoLog.Println("Internal configuration file " + mApp.InternalConfPath + " has been read successfully")
+	mApp.InfoLog.Println("Finished reading " + mApp.InternalConfPath + " file successfully")
 
 	//Increase the Pull counter to publish the data in the configuration file to all the slaves
 	//only if the input autoPropagate from the user is true

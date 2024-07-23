@@ -59,7 +59,7 @@ func main() {
 	masterSrvIP := masterFlags.String("IP", "127.0.0.1", "The IP address the master service will listen to")
 	masterSrvPort := masterFlags.String("Port", "8090", "The Port number the master service will listen to")
 	authConfigFile := masterFlags.String("authConfPath", "/etc/goxdp/auth.json", "Path to the authentication config file")
-	slavesConfigFile := masterFlags.String("slavesConfPath", "/etc/goxdp/slaves.json", "Path to the slave nodes config file)")
+	// slavesConfigFile := masterFlags.String("slavesConfPath", "/etc/goxdp/slaves.json", "Path to the slave nodes config file)")
 	certFilePath := masterFlags.String("certFilePath", "/etc/goxdp/cert.pem", "Path to certificate file")
 	keyFilePath := masterFlags.String("keyFilePath", "/etc/goxdp/key.pem", "Path to key file")
 	masterSslEn := masterFlags.Bool("enableSSl", true, "Enable SSL on Master communication")
@@ -246,9 +246,9 @@ func main() {
 
 		//create instance of the MasterAPP struct
 		masterApp := master.MasterAPP{
-			InfoLog:               globalInfoLog,
-			ErrorLog:              globalErrorLog,
-			SlavesConfigFile:      *slavesConfigFile,
+			InfoLog:  globalInfoLog,
+			ErrorLog: globalErrorLog,
+			// SlavesConfigFile:      *slavesConfigFile,
 			AuthConfigFile:        *authConfigFile,
 			AuthUsers:             map[string]string{},
 			PermBlockedConfigFile: *permBlockedConfigFile,
@@ -273,10 +273,10 @@ func main() {
 		}
 
 		//load the slaves configuration file from slaves.json
-		err = masterApp.LoadSlavesConfig()
-		if err != nil {
-			globalErrorLog.Fatal(err)
-		}
+		// err = masterApp.LoadSlavesConfig()
+		// if err != nil {
+		// 	globalErrorLog.Fatal(err)
+		// }
 
 		//load the Internal configuration file contents into the memory
 		err = masterApp.LoadInternalConf()
