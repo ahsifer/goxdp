@@ -23,18 +23,31 @@ GoXDP is a simple and powerful XDP filter with kernel-space code built with C an
 The following include the available command line arguments and their description when starting a new GoXDP service:
 
 ```
-goxdp server -h
+./goxdp server -h
 Usage of server:
   -privateIP string
     	The private IP address the service will listen to, that will be used to respond to load,unload,block,allow, and status requests (default "127.0.0.1")
   -privatePort string
     	The private Port number the service will listen to (default "8090")
   -publicIP string
-    	The public IP address the service will listen to, that will be used to respond to metrics and status requests (default "127.0.0.1")
+    	The public IP address the service will listen to that will be used to respond to metrics and status requests (default "127.0.0.1")
   -publicPort string
     	The public Port number the service will listen to (default "8091")
-  -timeoutinterval int
-    	How long the timeout checker thread will wait before checking if there is any IP address or subnet with finished timeout to remove them from the blocked list.
+  -timeoutInterval int
+    	The timeout interval of the worker thread to check if subnet or IP address timeout is finished (default 30)
+  -master
+    	Enable master-slave communication
+  -masterIP string
+    	The IP address of the master service (default "127.0.0.1")
+  -masterPort string
+    	The port number that the master service is listening to (default "9999")
+  -protocol string
+    	use http or https to communicate with the master (default "http")
+  -validSSL
+    	Enable when the master uses valid SSL certificate (useful when the chosen protocol is https)
+  -masterPullInterval int
+    	The timeout interval between checking for updates from the master (default 5)
+
 ```
 
 # GoXDP Client
@@ -51,22 +64,40 @@ The first approach introduces the GoXDP client CLI commands to perform load, unl
 ./goxdp client -h
 Usage of client:
   -action string
-    	Available values are load,unload,block, allow, status
+    	Available values are load,unload,block, allow, status (Also incremental and reload can be used with the master service)
   -dstIP string
     	The IP address that the goxdp service is listening to (default "127.0.0.1")
   -dstPort string
     	The Port that the goxdp service is listening to (default "8090")
+  -flush
+    	Passed alongside with the actions status,block,allow to flush the status or blocked IP addresses or subnets tables
   -interfaces string
-    	Interfaces names that the XDP programme will be loaded or unloaded (Example 'eth0,eth1')
+    	Interfaces names that the XDP programme will be loaded to (Example 'eth0,eth1')
   -mode string
-    	The mode that XDP programme will be loaded (available values are nv,skb, and hw)
+    	The mode that XDP programme will be loaded (available modes are nv,skb, and hw)
   -src string
     	src IP address or subnet that will be blocked or allowed
   -timeout uint
     	How long the IP address or the subnet will be blocked in seconds
+  -master
+    	Destination host is a master or not
+  -protocol string
+    	use http or https (Useful when the master service using HTTPS) (default "http")
+  -validSSL
+    	Validate destination certificate when protocol parameter is true (Useful when the master service is using valid certificate)
+  -username string
+    	Used for authentication purposes when contacting the master service
+  -token string
+    	Used for authentication purposes when contacting the master service
 ```
 
 **CLI Operations:**
+
+> Note: all the following operations can be used with the master service only the following parameters needs to be added
+> 1- username
+> 2- token
+> 3- protocol
+> 4- validSSl
 
 ### 1- Load XDP filter to interface <br />
 
@@ -151,6 +182,8 @@ goxdp client --action=status --dstIP=127.0.0.1 --dstPort=8091
 ```
 goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
 ```
+
+### 8- master CLI operations
 
 ## RestFull API Client
 
