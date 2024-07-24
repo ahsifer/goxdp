@@ -15,7 +15,7 @@ GoXDP is a simple and powerful XDP filter with kernel-space code built with C an
 
 ## Quick Start for GoXDP binary
 
-- Download the latest binary from https://git.elcld.net/e_ahsifer/goxdp/-/releases.
+  - Download the latest binary from https://git.elcld.net/e_ahsifer/goxdp/-/releases.
 - Run `goxdp server -privateIP=127.0.0.1` to start goxdp service.
 
 ## Quick Start for GoXDP Master-Slave setup
