@@ -18,6 +18,13 @@ GoXDP is a simple and powerful XDP filter with kernel-space code built with C an
 - Download the latest binary from https://git.elcld.net/e_ahsifer/goxdp/-/releases.
 - Run `goxdp server -privateIP=127.0.0.1` to start goxdp service.
 
+## Quick Start for GoXDP Master-Slave setup
+
+1. Start the master service (The auth.json and blocked.list needs to be created first [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/home/Master-Slave-Implementation))
+   `docker run -d --network host --name goxdp-master --restart always ahsifer/goxdp-dev:3.0 master  -blockedFilePath=/etc/goxdp/blocked.list -authConfPath=/etc/goxdp/auth.json -certFilePath=/etc/goxdp/cert.pem -keyFilePath=/etc/goxdp/key.pem -internalConfPath=/etc/goxdp/internal.json  -timeoutCheckerInterval=5`
+2. Start the slave service
+   `docker run -d --network host --name goxdp --privileged --restart always ahsifer/goxdp-dev:3.0 server --master=true --masterIP=127.0.0.1 --masterPort=9999 --validSSL=false --masterPullInterval=5 --protocol=https --timeoutInterval=5`
+
 # GoXDP service
 
 The following include the available command line arguments and their description when starting a new GoXDP service:
@@ -80,7 +87,7 @@ Usage of master:
     	The timeout interval in seconds that the master service will check if the timeout of blocked IP address or subnets is finished (default 5)
 ```
 
-For more information visit [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/Master-Slave-Implementation)
+For more information visit [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/home/Master-Slave-Implementation)
 
 # GoXDP Client
 

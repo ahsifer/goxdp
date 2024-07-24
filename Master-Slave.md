@@ -6,7 +6,7 @@
 
 # Introduction
 
-As the number of GoXDP instances increases, The effort needed and the complexity to manage these instances increases. Therefore, The GoXDP Master-Slave cluster setup can be effectively used to ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes as shown in the following diagram. <br>
+when the number of GoXDP instances increases, the effort and complexity needed to manage these instances increases. Therefore, The GoXDP Master-Slave cluster setup can effectively ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes as shown in the following diagram.  <br>
 ![master-slave](uploads/6def4ec3bfa40442960eb265430a14cc/master-slave.png){width=70%}
 
 # Configuration files
@@ -73,4 +73,5 @@ As the PULL_COUNTER and the list of CLI blocked IP addresses will reset when the
 3. Each slave node will pull the value of the PULL_COUNTER from the master node using restful API requests. If the returned value is different than the value of the slave's PULL_COUNTER, the slave node will pull the blocked IP addresses and subnets from the master and will block and unblock accordingly and then update its own PULL_COUNTER.
 4. Any operations on the master including block, allow, flush, increment, and reload will lead to an increment of the PULL_COUNTER so that the new configuration is propagated to the slave nodes.
 5. It is crucial to mention that the slave nodes have higher priority than the master in terms of IP address blocking. This means if the IP address is blocked directly on the slave node, it cannot be unblocked by the master. This will ensure that the system fulfills the requirements when specific IP addresses need to be blocked on specific slave nodes forever.
-6. when blocking with timeout for instance blocking 1.1.1.1/32 for 120 seconds and one of the slave nodes lost the connectivity with the master for 30 seconds. When the issue is resolved the slave node will block the 1.1.1.1/32 IP address only for 90 seconds.
+6. When blocking with timeout for instance blocking 1.1.1.1/32 for 120 seconds and one of the slave nodes lost the connectivity with the master for 30 seconds. When the issue is resolved the slave node will block the 1.1.1.1/32 IP address only for 90 seconds.
+7. The priority of the slave node for the CLI operations higher from the received operations from the master except for one case which is if the received timeout from the master is greater than the timeout received from the CLI block operation then the timeout will be replaced.
