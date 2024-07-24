@@ -228,13 +228,13 @@ goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
 ### 8- Increase master's pull counter
 
 ```
-goxdp client --action=increment --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+goxdp client --action=increment --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
 ```
 
 ### 9- Reload master's configuration files (reread internal.json, blocked.list, and auth.json)
 
 ```
-goxdp client --action=reload --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+goxdp client --action=reload --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
 ```
 
 ## RestFull API Client
