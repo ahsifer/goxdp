@@ -228,13 +228,13 @@ goxdp client --action=status --flush --dstIP=127.0.0.1 --dstPort=8090
 ### 8- Increase master's pull counter
 
 ```
-goxdp client --action=increment --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+goxdp client --action=increment --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=xxxx --token=xxxx
 ```
 
 ### 9- Reload master's configuration files (reread internal.json, blocked.list, and auth.json)
 
 ```
-goxdp client --action=reload --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=test --token=test
+goxdp client --action=reload --dstIP=127.0.0.1 --dstPort=9999 --master=true --protocol=https --validSSL=false --username=xxxx --token=xxxx
 ```
 
 ## RestFull API Client
@@ -294,13 +294,13 @@ curl -X GET http://127.0.0.1:8090/flushstatus
 ### 8- POST: Increment master's pull counter
 
 ```
-curl -X POST -k --header "username:test" --header "token:test" https://127.0.0.1:9999/increment
+curl -X POST -k --header "username:xxxx" --header "token:xxxx" https://127.0.0.1:9999/increment
 ```
 
 ### 9- POST: reload master's configuration
 
 ```
-curl -X GET http://127.0.0.1:8090/flushstatus
+curl -X POST -k --header "username:xxxx" --header "token:xxxx" https://127.0.0.1:9999/reload
 ```
 
 # Metrics
