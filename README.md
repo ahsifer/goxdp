@@ -20,9 +20,9 @@ GoXDP is a simple and powerful XDP filter with kernel-space code built with C an
 
 ## Quick Start for GoXDP Master-Slave setup
 
-1. Start the master service (The auth.json and blocked.list needs to be created first [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/home/Master-Slave-Implementation))
-   `docker run -d --network host --name goxdp-master --restart always ahsifer/goxdp-dev:3.0 master  -blockedFilePath=/etc/goxdp/blocked.list -authConfPath=/etc/goxdp/auth.json -certFilePath=/etc/goxdp/cert.pem -keyFilePath=/etc/goxdp/key.pem -internalConfPath=/etc/goxdp/internal.json  -timeoutCheckerInterval=5`
-2. Start the slave service
+1. Start the master service (The auth.json and blocked.list needs to be created first [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/home/Master-Slave-Implementation)) <br>
+   `docker run -d --network host --name goxdp-master --restart always ahsifer/goxdp-dev:3.0 master -blockedFilePath=/etc/goxdp/blocked.list -authConfPath=/etc/goxdp/auth.json -certFilePath=/etc/goxdp/cert.pem -keyFilePath=/etc/goxdp/key.pem -internalConfPath=/etc/goxdp/internal.json  -timeoutCheckerInterval=5`
+2. Start the slave service <br>
    `docker run -d --network host --name goxdp --privileged --restart always ahsifer/goxdp-dev:3.0 server --master=true --masterIP=127.0.0.1 --masterPort=9999 --validSSL=false --masterPullInterval=5 --protocol=https --timeoutInterval=5`
 
 # GoXDP service
