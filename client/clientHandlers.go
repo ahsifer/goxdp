@@ -147,7 +147,7 @@ func (app *ClientAPP) StatusXDP() (string, error) {
 		outMsg += "\tIP Address\t\t\tTimeout\t\t\tRemaining Time\n"
 
 		for index, value := range message.Timeout {
-			outMsg += fmt.Sprintf("\t%d- %s\t\t\t%s\t%ds\n", index+1, value.Src, value.Timeout, value.Remaining)
+			outMsg += fmt.Sprintf("\t%d- %s\t\t%s\t%ds\n", index+1, value.Src, value.Timeout, value.Remaining)
 		}
 
 		//Print stats table

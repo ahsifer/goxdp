@@ -65,13 +65,6 @@ func updateBlockedIPs(currentBlockedIPs []internalIP, ipMap map[BpfIpv4LpmKey]bo
 }
 
 func (app *Application) SlaveBlockedManager() error {
-	app.InfoLog.Println("This the already blocked array before pulling --> ")
-	for index1, value1 := range app.BlockedList {
-		app.InfoLog.Println(index1, value1.key.Saddr, helpers.IntToIPv4(value1.key.Saddr))
-
-	}
-	app.InfoLog.Println("This the already blocked hash map before pulling--> ", app.BlockedListPointers)
-	app.InfoLog.Println("This the already blocked timeout hash map before pulling--> ", app.TimeoutList)
 
 	resp, err := app.SlaveClient.Get(app.MasterURL + "/status")
 	if err != nil {
@@ -84,16 +77,6 @@ func (app *Application) SlaveBlockedManager() error {
 	}
 	ipMap, timeoutMap := createIPlistMap(marshaledData.PermanentBlocked, marshaledData.CLIBlocked)
 	toBlock, toUnblock := updateBlockedIPs(app.BlockedList, ipMap)
-	app.InfoLog.Println("This the toBlock array --> ")
-	for index1, value1 := range toBlock {
-		app.InfoLog.Println(index1, value1.Saddr, helpers.IntToIPv4(value1.Saddr))
-
-	}
-	app.InfoLog.Println("This the toUnblock array --> ")
-	for index1, value1 := range toUnblock {
-		app.InfoLog.Println(index1, value1.Saddr, helpers.IntToIPv4(value1.Saddr))
-
-	}
 	//block the IP addresses from the master
 	for _, value := range toBlock {
 		//Block the IP address and update the MasterBlockedList slice
@@ -107,11 +90,22 @@ func (app *Application) SlaveBlockedManager() error {
 		}
 		app.BlockedList = append(app.BlockedList, tempInternalIP)
 		app.BlockedListPointers[value] = len(app.BlockedList) - 1
-		//check if the IP address has timeout value to block it with the timeout
-		timeout, ok := timeoutMap[value]
-		if ok {
-			app.TimeoutList[value] = time.Now().Add(time.Duration(timeout) * time.Second)
+
+	}
+	//loop over the new timeout list and add it to the current timeout list
+	for key, value := range timeoutMap {
+		newTimeout := time.Now().Add(time.Duration(value) * time.Second)
+		//check if the IP already have timeout and the IP address is blocked by the CLI commands
+		if oldTimeout, ok := app.TimeoutList[key]; ok && app.BlockedList[app.BlockedListPointers[key]].cliBlocked {
+			//check if the received timeout from the master is greater than the current timeout
+			if newTimeout.After(oldTimeout) {
+				app.TimeoutList[key] = newTimeout
+			}
+			continue
 		}
+		//else: just add it to the list of timeouts
+		app.TimeoutList[key] = time.Now().Add(time.Duration(value) * time.Second)
+
 	}
 	for _, value := range toUnblock {
 		err = app.BpfObjects.BlockedIpv4.Delete(&value)
@@ -127,13 +121,7 @@ func (app *Application) SlaveBlockedManager() error {
 		delete(app.BlockedListPointers, value)
 		delete(app.TimeoutList, value)
 	}
-	app.PullCounter = marshaledData.PullCounter
-	app.InfoLog.Println("This the already blocked array after pulling --> ")
-	for index1, value1 := range app.BlockedList {
-		app.InfoLog.Println(index1, value1.key.Saddr, helpers.IntToIPv4(value1.key.Saddr))
 
-	}
-	app.InfoLog.Println("This the already blocked hash map after pulling--> ", app.BlockedListPointers)
-	app.InfoLog.Println("This the already blocked timeout hash map after pulling--> ", app.TimeoutList)
+	app.PullCounter = marshaledData.PullCounter
 	return nil
 }
