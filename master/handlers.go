@@ -148,6 +148,7 @@ func (mApp *MasterAPP) xdpReloadConf(response http.ResponseWriter, request *http
 
 	}
 	mApp.PullCounter++
+	mApp.WriteInternalConf()
 	response.WriteHeader(200)
 
 }

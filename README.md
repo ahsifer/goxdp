@@ -52,8 +52,35 @@ Usage of server:
 
 # GoXDP Master Service
 
-As the number of goxdp instances increases, The effort needed and the complexity to manage these instances increases. Therefore, The GoXDP Master-Slave configuration can be effectively used to ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes. The following diagram describes the cluster setup. <br>
-![master-slave](master-slave.png){width=70%}
+The following include the available command line arguments and their description when starting a new GoXDP master service:
+
+```
+./goxdp master -h
+Usage of master:
+  -IP string
+    	The IP address the master service will listen to (default "0.0.0.0")
+  -Port string
+    	The Port number the master service will listen to (default "8090")
+  -authConfPath string
+    	Path to the authentication config file (default "/etc/goxdp/auth.json")
+  -blockedFilePath string
+    	Path to the file that include the initial IP addresses and subnets that needs to be blocked in all the slaves once the master service starts (default "/etc/goxdp/blocked.list")
+  -internalConfPath string
+    	Path to the auto generated file that used to store the information about all the blocked IP addresses and subnets that have been added using CLI or restful API to keep them permanent after restarts (default "/etc/goxdp/internal.json")
+  -autoPropagate
+    	Retransmit the blocked IP addresses to all the slaves when master starts or restart (Increment the PULL_COUNTER on restarts) (default false)
+  -enableSSl
+    	Enable SSL on Master communication (default true)
+  -certFilePath string
+    	Path to certificate file (default "/etc/goxdp/cert.pem")
+  -keyFilePath string
+    	Path to key file (default "/etc/goxdp/key.pem")
+
+  -timeoutCheckerInterval int
+    	The timeout interval in seconds that the master service will check if the timeout of blocked IP address or subnets is finished (default 5)
+```
+
+For more information visit [Master-Slave wiki](https://git.elcld.net/e_ahsifer/goxdp/-/wikis/Master-Slave-Implementation)
 
 # GoXDP Client
 

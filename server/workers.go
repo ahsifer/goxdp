@@ -57,8 +57,6 @@ func (app *Application) slavePuller(interval int) {
 				app.ErrorLog.Println(err.Error())
 				continue
 			}
-			//update the pull counter
-			app.PullCounter = marshaledData.PullCounter
 			app.InfoLog.Println("Syncing with the master done successfully")
 
 		}

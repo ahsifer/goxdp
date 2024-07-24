@@ -10,17 +10,6 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type MasterResponse struct {
-	PullCounter      uint             `json:"PULL_COUNTER"`
-	PermanentBlocked []string         `json:"PERMANENT_BLOCKED"`
-	CLIBlocked       []MasterCLIBlock `json:"CLI_BLOCKED"`
-}
-
-type MasterCLIBlock struct {
-	Src     string `json:"src"`
-	Timeout int    `json:"timeout,omitempty"`
-}
-
 func unmarshalJSON(jsonData io.ReadCloser) (*MasterResponse, error) {
 	var response MasterResponse
 	err := json.NewDecoder(jsonData).Decode(&response)
@@ -76,6 +65,13 @@ func updateBlockedIPs(currentBlockedIPs []internalIP, ipMap map[BpfIpv4LpmKey]bo
 }
 
 func (app *Application) SlaveBlockedManager() error {
+	app.InfoLog.Println("This the already blocked array before pulling --> ")
+	for index1, value1 := range app.BlockedList {
+		app.InfoLog.Println(index1, value1.key.Saddr, helpers.IntToIPv4(value1.key.Saddr))
+
+	}
+	app.InfoLog.Println("This the already blocked hash map before pulling--> ", app.BlockedListPointers)
+	app.InfoLog.Println("This the already blocked timeout hash map before pulling--> ", app.TimeoutList)
 
 	resp, err := app.SlaveClient.Get(app.MasterURL + "/status")
 	if err != nil {
@@ -88,6 +84,16 @@ func (app *Application) SlaveBlockedManager() error {
 	}
 	ipMap, timeoutMap := createIPlistMap(marshaledData.PermanentBlocked, marshaledData.CLIBlocked)
 	toBlock, toUnblock := updateBlockedIPs(app.BlockedList, ipMap)
+	app.InfoLog.Println("This the toBlock array --> ")
+	for index1, value1 := range toBlock {
+		app.InfoLog.Println(index1, value1.Saddr, helpers.IntToIPv4(value1.Saddr))
+
+	}
+	app.InfoLog.Println("This the toUnblock array --> ")
+	for index1, value1 := range toUnblock {
+		app.InfoLog.Println(index1, value1.Saddr, helpers.IntToIPv4(value1.Saddr))
+
+	}
 	//block the IP addresses from the master
 	for _, value := range toBlock {
 		//Block the IP address and update the MasterBlockedList slice
@@ -118,8 +124,16 @@ func (app *Application) SlaveBlockedManager() error {
 		index := app.BlockedListPointers[value]
 		app.BlockedList = helpers.RemoveAndResliceArrayMap(app.BlockedList, index)
 		app.BlockedListPointers[lastElement.key] = index
+		delete(app.BlockedListPointers, value)
 		delete(app.TimeoutList, value)
 	}
 	app.PullCounter = marshaledData.PullCounter
+	app.InfoLog.Println("This the already blocked array after pulling --> ")
+	for index1, value1 := range app.BlockedList {
+		app.InfoLog.Println(index1, value1.key.Saddr, helpers.IntToIPv4(value1.key.Saddr))
+
+	}
+	app.InfoLog.Println("This the already blocked hash map after pulling--> ", app.BlockedListPointers)
+	app.InfoLog.Println("This the already blocked timeout hash map after pulling--> ", app.TimeoutList)
 	return nil
 }

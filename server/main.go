@@ -56,8 +56,8 @@ func main() {
 
 	//Handling Master Flags
 	masterFlags := flag.NewFlagSet("master", flag.ExitOnError)
-	masterSrvIP := masterFlags.String("IP", "127.0.0.1", "The IP address the master service will listen to")
-	masterSrvPort := masterFlags.String("Port", "8090", "The Port number the master service will listen to")
+	masterSrvIP := masterFlags.String("IP", "0.0.0.0", "The IP address the master service will listen to")
+	masterSrvPort := masterFlags.String("Port", "9999", "The Port number the master service will listen to")
 	authConfigFile := masterFlags.String("authConfPath", "/etc/goxdp/auth.json", "Path to the authentication config file")
 	// slavesConfigFile := masterFlags.String("slavesConfPath", "/etc/goxdp/slaves.json", "Path to the slave nodes config file)")
 	certFilePath := masterFlags.String("certFilePath", "/etc/goxdp/cert.pem", "Path to certificate file")
@@ -66,7 +66,7 @@ func main() {
 	permBlockedConfigFile := masterFlags.String("blockedFilePath", "/etc/goxdp/blocked.list", "Path to the file that include the initial IP addresses and subnets that needs to be blocked in all the slaves once the master service starts")
 	internalConfPath := masterFlags.String("internalConfPath", "/etc/goxdp/internal.json", "Path to the auto generated file that used to store the information about all the blocked IP addresses and subnets that have been added using CLI or restful API to keep them permanent after restarts")
 	masterTimeoutCheckerInterval := masterFlags.Int("timeoutCheckerInterval", 5, "The timeout interval in seconds that the master service will check if the timeout of blocked IP address or subnet is finished")
-	autoPropagate := masterFlags.Bool("autoPropagate", false, "Retransmit the blocked IP addresses ot all the slaves when master starts or restart")
+	autoPropagate := masterFlags.Bool("autoPropagate", false, "Retransmit the blocked IP addresses to all the slaves when master starts or restart (Increment the PULL_COUNTER on restarts)")
 
 	//defining logging constants
 	var globalInfoLog *log.Logger = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)

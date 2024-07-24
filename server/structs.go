@@ -66,3 +66,16 @@ type internalIP struct {
 	key        BpfIpv4LpmKey
 	cliBlocked bool
 }
+
+//Slave worker structs
+
+type MasterResponse struct {
+	PullCounter      uint             `json:"PULL_COUNTER"`
+	PermanentBlocked []string         `json:"PERMANENT_BLOCKED"`
+	CLIBlocked       []MasterCLIBlock `json:"CLI_BLOCKED"`
+}
+
+type MasterCLIBlock struct {
+	Src     string `json:"src"`
+	Timeout int    `json:"timeout,omitempty"`
+}

@@ -212,9 +212,6 @@ func (mApp *MasterAPP) RemoveBlockedIP(IP string, incPC bool) error {
 	//Remove the blocked IP address or the subnets from the permanently blocked list of IP addresses
 	index, ok := mApp.PermBlockedIPsHashMap[*correctIP]
 	if ok {
-		if len(mApp.PermBlockedIPsArray) == 0 {
-			return nil
-		}
 		if len(mApp.PermBlockedIPsArray) == 1 {
 			mApp.PermBlockedIPsArray = []string{}
 			mApp.PermBlockedIPsHashMap = map[string]int{}
@@ -230,7 +227,6 @@ func (mApp *MasterAPP) RemoveBlockedIP(IP string, incPC bool) error {
 			mApp.PullCounter++
 		}
 		mApp.WriteInternalConf()
-
 		return nil
 	}
 	// mApp.InfoLog.Println(*correctIP)
@@ -238,10 +234,6 @@ func (mApp *MasterAPP) RemoveBlockedIP(IP string, incPC bool) error {
 	//Remove the blocked IP address or the subnets from the CLI blocked list of IP addresses
 	index, ok = mApp.CliBlockedIPsHashMap[*correctIP]
 	if ok {
-
-		if len(mApp.CliBlockedIPsArray) == 0 {
-			return nil
-		}
 		if len(mApp.CliBlockedIPsArray) == 1 {
 			mApp.CliBlockedIPsArray = []BlockedCliIP{}
 			mApp.CliBlockedIPsHashMap = map[string]int{}
@@ -250,6 +242,7 @@ func (mApp *MasterAPP) RemoveBlockedIP(IP string, incPC bool) error {
 			return nil
 		}
 		// mApp.InfoLog.Println("Begin testing section")
+		//This works perfectly when removing the last element from the array
 		lastElement := mApp.CliBlockedIPsArray[len(mApp.CliBlockedIPsArray)-1]
 		mApp.CliBlockedIPsArray = helpers.RemoveAndResliceArrayMap(mApp.CliBlockedIPsArray, index)
 		mApp.CliBlockedIPsHashMap[*(lastElement.Src)] = index
@@ -306,7 +299,6 @@ func (mApp *MasterAPP) CliAddBlockedIP(IP string, timeout int) error {
 	mApp.CliBlockedIPsHashMap[*correctIP] = len(mApp.CliBlockedIPsArray) - 1
 	mApp.PullCounter++
 	mApp.WriteInternalConf()
-
 	return nil
 }
 

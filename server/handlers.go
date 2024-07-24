@@ -3,16 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ahsifer/goxdp/helpers"
-	"github.com/cilium/ebpf"
-	"github.com/cilium/ebpf/link"
 	"net"
 	"net/http"
 	"net/netip"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ahsifer/goxdp/helpers"
+	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/link"
 )
 
 // Load XDP program into the provided interfaces
@@ -265,11 +267,20 @@ func (app *Application) xdpStatus(response http.ResponseWriter, request *http.Re
 
 	//prepare the timeouts of the blocked subnets
 	timeoutOutput := []statusTimeoutOutput{}
-	for srcKey, timeValue := range app.TimeoutList {
+	//generate sorted list of the IP addresses with there timeoutes
+	keys := make([]BpfIpv4LpmKey, 0, len(app.TimeoutList))
+	for key := range app.TimeoutList {
+		keys = append(keys, key)
+	}
+	//sort the list to show them sorted to the user
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Saddr < keys[j].Saddr
+	})
+	for _, key := range keys {
 		timeoutOutput = append(timeoutOutput, statusTimeoutOutput{
-			Src:       helpers.IntToIPv4(srcKey.Saddr) + "/" + strconv.FormatUint(uint64(srcKey.Prefixlen), 10),
-			Timeout:   timeValue.Format("2006-01-02 15:04:05"),
-			Remaining: int(timeValue.Sub(time.Now()).Seconds()),
+			Src:       helpers.IntToIPv4(key.Saddr) + "/" + strconv.FormatUint(uint64(key.Prefixlen), 10),
+			Timeout:   app.TimeoutList[key].Format("2006-01-02 15:04:05"),
+			Remaining: int(time.Until(app.TimeoutList[key]).Seconds()),
 		})
 	}
 
