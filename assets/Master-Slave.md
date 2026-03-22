@@ -2,12 +2,18 @@
 
 # Table of contents
 
-[[_TOC_]]
+- [Table of contents](#table-of-contents)
+- [Introduction](#introduction)
+- [Configuration files](#configuration-files)
+  - [blocked.list file](#blockedlist-file)
+  - [auth.json file](#authjson-file)
+  - [internal.json file](#internaljson-file)
+- [Master-Slave communication process](#master-slave-communication-process)
 
 # Introduction
 
-when the number of GoXDP instances increases, the effort and complexity needed to manage these instances increases. Therefore, The GoXDP Master-Slave cluster setup can effectively ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes as shown in the following diagram.  <br>
-![master-slave](assets/master-slave.png){width=70%}
+when the number of GoXDP instances increases, the effort and complexity needed to manage these instances increases. Therefore, The GoXDP Master-Slave cluster setup can effectively ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes as shown in the following diagram. <br>
+![master-slave](master-slave.png){width=40%}
 
 # Configuration files
 

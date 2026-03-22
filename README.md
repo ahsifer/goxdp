@@ -1,11 +1,19 @@
 # Table of contents
 
-[[_TOC_]]
+- [Introduction](#introduction)
+- [Quick Start](#quick-start)
+  - [Quick Start for GoXDP on Docker](#quick-start-for-goxdp-on-docker)
+  - [Quick Start for GoXDP binary](#quick-start-for-goxdp-binary)
+  - [Quick Start for GoXDP Master-Slave setup](#quick-start-for-goxdp-master-slave-setup)
+- [GoXDP service](#goxdp-service)
+- [GoXDP Master Service](#goxdp-master-service)
+- [GoXDP Client](#goxdp-client)
+- [RestFull API Client](#restfull-api-client)
 
 # Introduction
 
 GoXDP is a simple and powerful XDP filter with kernel-space code built with C and user-space code built with Golang that utilizes the power of the longest prefix matching (LPM) algorithm to filter subnets and IP addresses with predefined timeouts. Also, interacting with GoXDP can be through the RestfulAPI or the CLI client commands. <br>
-![golang-logo](golang-logo.png){width=60%}
+![golang-logo](assets/golang-logo.png){width=60%}
 
 # Quick Start
 
