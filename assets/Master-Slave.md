@@ -7,7 +7,7 @@
 # Introduction
 
 when the number of GoXDP instances increases, the effort and complexity needed to manage these instances increases. Therefore, The GoXDP Master-Slave cluster setup can effectively ease the propagation process of newly blocked/allowed subnets and IP addresses to all slave nodes as shown in the following diagram.  <br>
-![master-slave](uploads/6def4ec3bfa40442960eb265430a14cc/master-slave.png){width=70%}
+![master-slave](assets/master-slave.png){width=70%}
 
 # Configuration files
 
@@ -23,7 +23,7 @@ This file include list of the IP addresses that needs to be blocked forever by t
 
 ```
 192.168.1.1
-10.4.4.0/24
+10.9.1.0/24
 123.159.0.0/16
 1.1.1.1/32
 5.4.3.2/32
